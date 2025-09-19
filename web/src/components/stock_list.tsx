@@ -1,0 +1,3 @@
+function StockList() {
+  return <>StockList</>;
+}
