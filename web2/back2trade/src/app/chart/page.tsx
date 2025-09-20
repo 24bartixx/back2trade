@@ -21,7 +21,7 @@ export default function Home() {
   const [slow, setSlow] = useState(50);
   const [metrics, setMetrics] = useState<any>(null);
   const [positions, setPositions] = useState<TradePosition[]>([]);
-  const [nextHandler, setNextHandler] = useState<() => void>(() => () => {});
+  const [nextHandler, setNextHandler] = useState<() => void>(() => () => { });
   const [nextDisabled, setNextDisabled] = useState(true);
 
   // Current price tracking
@@ -166,9 +166,8 @@ export default function Home() {
                         Total P&L
                       </span>
                       <span
-                        className={`font-semibold ${
-                          metrics.pnl >= 0 ? "text-green-600" : "text-red-600"
-                        }`}
+                        className={`font-semibold ${metrics.pnl >= 0 ? "text-green-600" : "text-red-600"
+                          }`}
                       >
                         {(metrics.pnl * 100).toFixed(2)}%
                       </span>
@@ -208,11 +207,10 @@ export default function Home() {
                 >
                   <div className="flex items-center justify-between mb-2">
                     <span
-                      className={`px-2 py-1 rounded text-xs font-medium ${
-                        position.type === "long"
+                      className={`px-2 py-1 rounded text-xs font-medium ${position.type === "long"
                           ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
                           : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
-                      }`}
+                        }`}
                     >
                       {position.type.toUpperCase()}
                     </span>
