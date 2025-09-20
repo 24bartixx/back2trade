@@ -1,4 +1,5 @@
-export class CreateUserDtoResponse {
-      email!: string;    
-      username!: string;
+export class CreateUserResponseDto {
+  email!: string;
+  username!: string;
+  message?: string;
 }
