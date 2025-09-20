@@ -4,6 +4,7 @@ import TradingChart from '@/components/chart/TradingChart';
 import TradeForm, { TradePosition } from '@/components/inputs/TradeForm';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { useGameOptions } from '@/providers/game-options-provider';
 
 export default function Home() {
   const [symbol, setSymbol] = useState('BTCUSDT');
@@ -13,6 +14,14 @@ export default function Home() {
   const [metrics, setMetrics] = useState<any>(null);
   const [positions, setPositions] = useState<TradePosition[]>([]);
   
+
+  const settings = useGameOptions();
+  
+  // Get dates with fallbacks
+  let startDate = settings.state.startDate || new Date("2023-09-11T00:00:00Z");
+  startDate = new Date(startDate.getTime() + 24 * 60 * 60 * 1000);
+  const endDate = settings.state.finishDate || new Date("2023-09-14T23:59:59Z");
+
   // Current price tracking
   const [currentPrice, setCurrentPrice] = useState<number | null>(null);
   
@@ -89,8 +98,8 @@ export default function Home() {
               </div>
             <TradingChart
               symbol="BTCUSDT"
-              startDate={new Date("2023-09-11T00:00:00Z")}
-              endDate={new Date("2023-09-14T23:59:59Z")}
+              startDate={startDate}
+              endDate={endDate}
               positions={positions}
               onPositionUpdate={handlePositionUpdate}
               onPositionRemove={handlePositionRemove}
