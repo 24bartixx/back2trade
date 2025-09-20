@@ -9,6 +9,7 @@ export interface TradePosition {
   entry: number;
   stopLoss: number;
   takeProfit: number;
+  portfolioPercentage: number;
   timestamp: number;
 }
 
@@ -21,6 +22,7 @@ export default function TradeForm({ onSubmit }: TradeFormProps) {
   const [open, setOpen] = useState("")
   const [sl, setSl] = useState("")
   const [tp, setTp] = useState("")
+  const [portfolioPercentage, setPortfolioPercentage] = useState("10")
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -28,9 +30,15 @@ export default function TradeForm({ onSubmit }: TradeFormProps) {
     const openValue = parseFloat(open)
     const slValue = parseFloat(sl)
     const tpValue = parseFloat(tp)
+    const percentageValue = parseFloat(portfolioPercentage)
     
-    if (isNaN(openValue) || isNaN(slValue) || isNaN(tpValue)) {
+    if (isNaN(openValue) || isNaN(slValue) || isNaN(tpValue) || isNaN(percentageValue)) {
       alert("Proszę wprowadzić poprawne wartości liczbowe")
+      return
+    }
+    
+    if (percentageValue <= 0 || percentageValue > 100) {
+      alert("Procent portfela musi być między 1 a 100")
       return
     }
     
@@ -54,6 +62,7 @@ export default function TradeForm({ onSubmit }: TradeFormProps) {
         entry: openValue,
         stopLoss: slValue,
         takeProfit: tpValue,
+        portfolioPercentage: percentageValue,
         timestamp: Date.now()
       }
       onSubmit(tradePosition)
@@ -67,14 +76,15 @@ export default function TradeForm({ onSubmit }: TradeFormProps) {
 
   const handleDefault = () => {
     if (type === 'long') {
-      setOpen("116000")
-      setSl("115000")
-      setTp("117000")
+      setOpen("25800")
+      setSl("25600")
+      setTp("26000")
     } else {
       setOpen("116000")
       setSl("117000")
       setTp("115000")
     }
+    setPortfolioPercentage("10")
   }
 
   return (
@@ -141,6 +151,22 @@ export default function TradeForm({ onSubmit }: TradeFormProps) {
           value={tp}
           onChange={(e) => setTp(e.target.value)}
           placeholder="Enter take profit"
+          className="w-full"
+        />
+      </div>
+
+      <div className="space-y-2">
+        <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+          Portfolio Percentage (%)
+        </label>
+        <Input
+          type="number"
+          min="1"
+          max="100"
+          step="1"
+          value={portfolioPercentage}
+          onChange={(e) => setPortfolioPercentage(e.target.value)}
+          placeholder="Enter portfolio percentage"
           className="w-full"
         />
       </div>

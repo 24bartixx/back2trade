@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import TradingChart from '@/components/chart/TradingChart';
 import TradeForm, { TradePosition } from '@/components/inputs/TradeForm';
 import { Input } from '@/components/ui/input';
@@ -12,6 +12,14 @@ export default function Home() {
   const [slow, setSlow] = useState(50);
   const [metrics, setMetrics] = useState<any>(null);
   const [positions, setPositions] = useState<TradePosition[]>([]);
+  
+  // Current price tracking
+  const [currentPrice, setCurrentPrice] = useState<number | null>(null);
+  
+  // Memoize the price change handler to avoid re-renders
+  const handleCurrentPriceChange = useCallback((price: number) => {
+    setCurrentPrice(price);
+  }, []);
 
   const handleMetricsUpdate = (newMetrics: any) => {
     setMetrics(newMetrics);
@@ -118,16 +126,15 @@ export default function Home() {
                 </h2>
 
               </div>
-              <TradingChart 
-                symbol={symbol}
-                interval={interval}
-                fast={fast}
-                slow={slow}
-                onMetricsUpdate={handleMetricsUpdate}
-                positions={positions}
-                onPositionUpdate={handlePositionUpdate}
-                onPositionRemove={handlePositionRemove}
-              />
+            <TradingChart
+              symbol="BTCUSDT"
+              startDate={new Date("2023-09-11T00:00:00Z")}
+              endDate={new Date("2023-09-14T23:59:59Z")}
+              positions={positions}
+              onPositionUpdate={handlePositionUpdate}
+              onPositionRemove={handlePositionRemove}
+              onCurrentPriceChange={handleCurrentPriceChange}
+            />
             </div>
           </div>
 

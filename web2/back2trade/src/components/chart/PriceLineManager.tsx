@@ -8,6 +8,7 @@ export interface TradePosition {
   entry: number;
   stopLoss: number;
   takeProfit: number;
+  portfolioPercentage: number;
   timestamp: number;
 }
 
@@ -29,7 +30,12 @@ export default function PriceLineManager({
 
   // Create or update price lines for a position
   const createPriceLines = useCallback((position: TradePosition) => {
-    if (!series) return;
+    if (!series) {
+      console.log('Series not available for creating price lines');
+      return;
+    }
+
+    console.log('Creating price lines for position:', position);
 
     // Remove existing lines for this position if they exist
     removePriceLines(position.id);
@@ -106,11 +112,25 @@ export default function PriceLineManager({
   const handleMouseDown = useCallback((event: MouseEvent) => {
     if (!series) return;
 
-    const rect = (event.target as HTMLElement).getBoundingClientRect();
+    // Check if the click is on the chart container
+    const target = event.target as HTMLElement;
+    const chartContainer = target.closest('[data-chart-container]');
+    if (!chartContainer) return;
+
+    console.log('Mouse down event:', event.target);
+
+    const rect = chartContainer.getBoundingClientRect();
     const y = event.clientY - rect.top;
+    
+    // Use the chart's coordinateToPrice method
     const price = series.coordinateToPrice(y);
     
-    if (!price) return;
+    console.log('Price at click:', price, 'Y coordinate:', y);
+    
+    if (price === null || price === undefined) {
+      console.log('Could not get price from coordinate');
+      return;
+    }
 
     // Find the closest position line
     let closestPosition: { id: string; lineType: 'entry' | 'stopLoss' | 'takeProfit'; distance: number } | null = null;
@@ -120,7 +140,8 @@ export default function PriceLineManager({
       const stopLossDistance = Math.abs(price - position.stopLoss);
       const takeProfitDistance = Math.abs(price - position.takeProfit);
 
-      const tolerance = Math.max(position.entry, position.stopLoss, position.takeProfit) * 0.01; // 1% tolerance
+      // Moderate tolerance - not too strict, not too loose
+      const tolerance = Math.max(position.entry, position.stopLoss, position.takeProfit) * 0.005; // 0.5% tolerance
 
       if (entryDistance < tolerance && (!closestPosition || entryDistance < closestPosition.distance)) {
         closestPosition = { id: position.id, lineType: 'entry', distance: entryDistance };
@@ -133,23 +154,33 @@ export default function PriceLineManager({
       }
     });
 
+    console.log('Closest position:', closestPosition);
+
     if (closestPosition) {
       const { id, lineType } = closestPosition;
+      console.log('Starting drag for:', id, lineType);
       isDraggingRef.current = {
         positionId: id,
         lineType: lineType
       };
+      // Prevent default to avoid chart interactions
+      event.preventDefault();
+      event.stopPropagation();
     }
   }, [series, positions]);
 
   const handleMouseMove = useCallback((event: MouseEvent) => {
     if (!isDraggingRef.current || !series) return;
 
-    const rect = (event.target as HTMLElement).getBoundingClientRect();
+    const target = event.target as HTMLElement;
+    const chartContainer = target.closest('[data-chart-container]');
+    if (!chartContainer) return;
+
+    const rect = chartContainer.getBoundingClientRect();
     const y = event.clientY - rect.top;
     const newPrice = series.coordinateToPrice(y);
     
-    if (!newPrice) return;
+    if (newPrice === null || newPrice === undefined) return;
 
     const { positionId, lineType } = isDraggingRef.current;
     const position = positions.find(p => p.id === positionId);
@@ -167,9 +198,14 @@ export default function PriceLineManager({
     isDraggingRef.current = null;
   }, []);
 
-  // Effect to manage positions
+  // Effect to manage positions - only when positions change
   useEffect(() => {
-    if (!series) return;
+    console.log('PriceLineManager effect triggered:', { series: !!series, positionsCount: positions.length });
+    
+    if (!series) {
+      console.log('Series not available, skipping price line creation');
+      return;
+    }
 
     // Remove all existing lines
     priceLinesRef.current.forEach((_, positionId) => {
@@ -178,12 +214,15 @@ export default function PriceLineManager({
 
     // Create lines for all positions
     positions.forEach(position => {
+      console.log('Creating price lines for position:', position);
       createPriceLines(position);
     });
-  }, [series, positions, createPriceLines, removePriceLines]);
+  }, [positions, createPriceLines, removePriceLines]); // Removed series from deps to avoid recreating on every series change
 
   // Add event listeners
   useEffect(() => {
+    console.log('Adding mouse event listeners for price line dragging');
+    
     // We'll add event listeners to the document for mouse events
     // The chart container will be handled by the parent component
     document.addEventListener('mousedown', handleMouseDown);
@@ -191,6 +230,7 @@ export default function PriceLineManager({
     document.addEventListener('mouseup', handleMouseUp);
 
     return () => {
+      console.log('Removing mouse event listeners');
       document.removeEventListener('mousedown', handleMouseDown);
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
@@ -208,23 +248,7 @@ export default function PriceLineManager({
     };
   }, [series, removePriceLines]);
 
-  // Public methods for external use
-  const removePosition = useCallback((positionId: string) => {
-    removePriceLines(positionId);
-    if (onPositionRemove) {
-      onPositionRemove(positionId);
-    }
-  }, [removePriceLines, onPositionRemove]);
 
-  const removeAllPositions = useCallback(() => {
-    priceLinesRef.current.forEach((_, positionId) => {
-      removePriceLines(positionId);
-    });
-  }, [removePriceLines]);
-
-  return {
-    removePosition,
-    removeAllPositions,
-    updatePosition,
-  };
+  // This component doesn't render anything, it just manages price lines
+  return null;
 }
