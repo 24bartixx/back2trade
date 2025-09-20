@@ -14,6 +14,7 @@ import { jwtConstants } from "./dto/constants";
       global: true,
       secret: jwtConstants.secret,
       signOptions: { expiresIn: "300s" }
-    }),]
+    })
+  ]
 })
 export class AuthModule {}

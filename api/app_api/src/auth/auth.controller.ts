@@ -23,7 +23,7 @@ export class AuthController {
   })
   @ApiResponse({
     status: HttpStatus.UNAUTHORIZED,
-    description: "Wrong login credentials",
+    description: "Wrong login credentials"
   })
   signIn(@Body() signInDto: SignInDto) {
     return this.authSerivce.signIn(signInDto);
