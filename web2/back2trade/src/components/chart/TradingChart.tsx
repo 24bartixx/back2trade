@@ -42,7 +42,7 @@ export default function TradingChart({ symbol, startDate, endDate, positions = [
   const containerRef = useRef<HTMLDivElement>(null);
   const seriesRef = useRef<ISeriesApi<'Candlestick'> | null>(null);
   const chartRef = useRef<IChartApi | null>(null);
-
+  const prevIndexRef = useRef(0);
   const [candles, setCandles] = useState<Candle[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
 
@@ -106,16 +106,6 @@ export default function TradingChart({ symbol, startDate, endDate, positions = [
     }
   }
 
-  // NEXT → pokaż kolejną świecę
-  // const handleNext = async () => {
-  //   if (currentIndex >= candles.length - 1) {
-  //     if (noMoreFutureRef.current) return;
-  //     await loadMoreFuture();
-  //   }
-  //   if (candles[currentIndex + 1]?.time * 1000 > endDate.getTime()) return; // blokada przy końcu
-  //   setCurrentIndex((prev) => prev + 1);
-  // };
-
   // DOGRYWANIE w lewo
   async function loadMoreHistory() {
     if (isLoadingLeftRef.current || noMoreHistoryRef.current) return;
@@ -138,11 +128,6 @@ export default function TradingChart({ symbol, startDate, endDate, positions = [
       const newCandles = [...filtered, ...candles];
       setCandles(newCandles);
       
-      // Update chart with new data without reset
-      if (seriesRef.current) {
-        // Instead of setData, we'll let the currentIndex effect handle the update
-        // This prevents chart reset
-      }
       
     } finally {
       isLoadingLeftRef.current = false;
@@ -169,11 +154,6 @@ export default function TradingChart({ symbol, startDate, endDate, positions = [
       const newCandles = [...candles, ...filtered];
       setCandles(newCandles);
       
-      // Update chart with new data without reset
-      if (seriesRef.current) {
-        // Instead of setData, we'll let the currentIndex effect handle the update
-        // This prevents chart reset
-      }
     } finally {
       isLoadingRightRef.current = false;
     }
@@ -185,7 +165,7 @@ export default function TradingChart({ symbol, startDate, endDate, positions = [
     if (!containerRef.current) return;
     const chart = createChart(containerRef.current, {
       width: containerRef.current.clientWidth,
-      height: 480,
+      height: 550,
       rightPriceScale: { borderVisible: true },
       timeScale: { borderVisible: true },
     });
@@ -235,7 +215,7 @@ export default function TradingChart({ symbol, startDate, endDate, positions = [
 
     }
     load();
-  }, [symbol, interval, startDate]);
+  }, [symbol, interval]);
 
   // Aktualizuj wykres przy zmianie currentIndex - tylko nowe świece
   useEffect(() => {
@@ -264,7 +244,7 @@ export default function TradingChart({ symbol, startDate, endDate, positions = [
         ref={containerRef}
         data-chart-container
         className="w-full overflow-hidden border border-slate-300 dark:border-slate-700"
-        style={{ height: '500px' }}
+        style={{ height: '550px' }}
       />
       
       {/* PriceLineManager - only render when series is ready */}

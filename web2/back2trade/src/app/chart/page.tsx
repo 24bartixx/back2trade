@@ -16,14 +16,14 @@ export default function Home() {
   const [slow, setSlow] = useState(50);
   const [metrics, setMetrics] = useState<any>(null);
   const [positions, setPositions] = useState<TradePosition[]>([]);
-  const [nextHandler, setNextHandler] = useState<() => void>(() => () => {});
+  const [nextHandler, setNextHandler] = useState<() => void>(() => () => { });
   const [nextDisabled, setNextDisabled] = useState(true);
-  
+
   // Current price tracking
   const [currentPrice, setCurrentPrice] = useState<number | null>(null);
 
   const settings = useGameOptions();
-  
+
   // Get dates with fallbacks
   let startDate = settings.state.startDate || new Date("2023-09-11T00:00:00Z");
   startDate = new Date(startDate.getTime() + 24 * 60 * 60 * 1000);
@@ -77,50 +77,50 @@ export default function Home() {
                 </h2>
               </div>
               <TradingChart
-  symbol="BTCUSDT"
-  startDate={startDate}
-  endDate={endDate}
-  interval={interval}
-  positions={positions}
-  onPositionUpdate={handlePositionUpdate}
-  onPositionRemove={handlePositionRemove}
-  onCurrentPriceChange={handleCurrentPriceChange}
-    onNextReady={handleNextReady}
-/>
+                symbol="BTCUSDT"
+                startDate={startDate}
+                endDate={endDate}
+                interval={interval}
+                positions={positions}
+                onPositionUpdate={handlePositionUpdate}
+                onPositionRemove={handlePositionRemove}
+                onCurrentPriceChange={handleCurrentPriceChange}
+                onNextReady={handleNextReady}
+              />
 
             </div>
           </div>
           {/* Sidebar */}
 
           <div>
-          <div className=" relative grid bg-white dark:bg-slate-800 rounded-xl shadow-lg p-6 mb-6 border border-slate-200 dark:border-slate-700 space-y-4">
-  <label className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-1">
-    Timeframe
-  </label>
-  <div className="flex gap-2">
-  <Select value={interval} onValueChange={setInterval_}>
-    <SelectTrigger className="w-40">
-      <SelectValue placeholder="Interval" />
-    </SelectTrigger>
-    <SelectContent>
-      <SelectItem value="1m">1 Minute</SelectItem>
-      <SelectItem value="5m">5 Minutes</SelectItem>
-      <SelectItem value="15m">15 Minutes</SelectItem>
-      <SelectItem value="1h">1 Hour</SelectItem>
-      <SelectItem value="4h">4 Hours</SelectItem>
-      <SelectItem value="1d">1 Day</SelectItem>
-    </SelectContent>
-  </Select>
+            <div className=" relative grid bg-white dark:bg-slate-800 rounded-xl shadow-lg p-6 mb-6 border border-slate-200 dark:border-slate-700 space-y-4">
+              <label className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-1">
+                Timeframe
+              </label>
+              <div className="flex gap-2">
+                <Select value={interval} onValueChange={setInterval_}>
+                  <SelectTrigger className="w-40">
+                    <SelectValue placeholder="Interval" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="1m">1 Minute</SelectItem>
+                    <SelectItem value="5m">5 Minutes</SelectItem>
+                    <SelectItem value="15m">15 Minutes</SelectItem>
+                    <SelectItem value="1h">1 Hour</SelectItem>
+                    <SelectItem value="4h">4 Hours</SelectItem>
+                    <SelectItem value="1d">1 Day</SelectItem>
+                  </SelectContent>
+                </Select>
 
-  <button
-    onClick={nextHandler}
-    disabled={nextDisabled}
-    className="w-20 px-2 py-1 bg-blue-600 text-white rounded disabled:opacity-50"
-  >
-    Next
-  </button>
-  </div>
-</div>
+                <button
+                  onClick={nextHandler}
+                  disabled={nextDisabled}
+                  className="w-20 px-2 py-1 bg-blue-600 text-white rounded disabled:opacity-50"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
 
             <div className="space-y-6">
               {/* Trade Form */}
@@ -161,9 +161,8 @@ export default function Home() {
                         Total P&L
                       </span>
                       <span
-                        className={`font-semibold ${
-                          metrics.pnl >= 0 ? "text-green-600" : "text-red-600"
-                        }`}
+                        className={`font-semibold ${metrics.pnl >= 0 ? "text-green-600" : "text-red-600"
+                          }`}
                       >
                         {(metrics.pnl * 100).toFixed(2)}%
                       </span>
@@ -203,11 +202,10 @@ export default function Home() {
                 >
                   <div className="flex items-center justify-between mb-2">
                     <span
-                      className={`px-2 py-1 rounded text-xs font-medium ${
-                        position.type === "long"
+                      className={`px-2 py-1 rounded text-xs font-medium ${position.type === "long"
                           ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
                           : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
-                      }`}
+                        }`}
                     >
                       {position.type.toUpperCase()}
                     </span>
