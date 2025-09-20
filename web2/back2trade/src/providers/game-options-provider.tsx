@@ -1,0 +1,59 @@
+"use client";
+
+import React, { createContext, useContext, useReducer } from "react";
+import { TimeUnit } from "@/types/game-options";
+
+export type GameOptions = {
+  timeUnit: (typeof TimeUnit)[keyof typeof TimeUnit];
+  timeValue: number;
+  accountBalance: number; // <- consistent name
+};
+
+type Action =
+  | { type: "SetTimeUnit"; timeUnit: GameOptions["timeUnit"] }
+  | { type: "SetTimeValue"; timeValue: number }
+  | { type: "SetAccountBalance"; accountBalance: number };
+
+const INITIAL_STATE: GameOptions = {
+  timeUnit: TimeUnit.Months,
+  timeValue: 10,
+  accountBalance: 10_000,
+};
+
+function gameOptionsReducer(state: GameOptions, action: Action): GameOptions {
+  switch (action.type) {
+    case "SetTimeUnit":
+      return { ...state, timeUnit: action.timeUnit };
+    case "SetTimeValue":
+      return { ...state, timeValue: action.timeValue };
+    case "SetAccountBalance":
+      return { ...state, accountBalance: action.accountBalance };
+    default: {
+      const _exhaustive: never = action;
+      return state;
+    }
+  }
+}
+
+type Ctx = { state: GameOptions; dispatch: React.Dispatch<Action> };
+const GameOptionsContext = createContext<Ctx | undefined>(undefined);
+
+export function GameOptionsProvider({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const [state, dispatch] = useReducer(gameOptionsReducer, INITIAL_STATE);
+  return (
+    <GameOptionsContext.Provider value={{ state, dispatch }}>
+      {children}
+    </GameOptionsContext.Provider>
+  );
+}
+
+export function useGameOptions() {
+  const ctx = useContext(GameOptionsContext);
+  if (!ctx)
+    throw new Error("useGameOptions must be used within <GameOptionsProvider>");
+  return ctx;
+}

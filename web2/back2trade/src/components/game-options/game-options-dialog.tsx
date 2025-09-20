@@ -1,8 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
-
+import React from "react";
 import {
   Dialog,
   DialogContent,
@@ -23,20 +22,22 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { TimeUnit } from "@/types/game-options";
+import { useGameOptions } from "@/providers/game-options-provider";
 
 export default function GameOptionsDialog() {
-  const [timeValue, setTimeValue] = useState<number>(10);
-  const [timeUnit, setTimeUnit] = useState<string>("months");
-  const [accountBalance, setAccountBalance] = useState<number>(10000);
+  const { state, dispatch } = useGameOptions();
+  const { timeValue, timeUnit, accountBalance } = state;
+
+  console.log(state);
 
   return (
     <Dialog>
-      {/* Avoid nested buttons */}
       <DialogTrigger asChild>
         <Button>Start a game</Button>
       </DialogTrigger>
 
-      <DialogContent className="sm:max-w-5xl">
+      <DialogContent className="sm:max-w-3xl">
         <DialogHeader>
           <DialogTitle>Session options</DialogTitle>
           <DialogDescription>
@@ -44,38 +45,63 @@ export default function GameOptionsDialog() {
           </DialogDescription>
         </DialogHeader>
 
-        <div>
-          <Label htmlFor="back-time" className="mb-2">
-            Session time
-          </Label>
-          <div id="back-time" className="flex items-center gap-6">
-            <Input
-              id="position-size"
-              type="number"
-              inputMode="decimal"
-              min={0}
-              step={1}
-              placeholder="e.g. 0.50"
-              className="w-56"
-              value={timeValue}
-              onChange={(e) => setTimeValue(Number(e.target.value))}
-            />
-            <Select value={timeUnit} onValueChange={setTimeUnit}>
-              <SelectTrigger id="timeframe" className="w-64">
-                <SelectValue placeholder="Choose…" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="minutes">minutes</SelectItem>
-                <SelectItem value="hours">hours</SelectItem>
-                <SelectItem value="days">days</SelectItem>
-                <SelectItem value="months">months</SelectItem>
-                <SelectItem value="years">years</SelectItem>
-              </SelectContent>
-            </Select>
+        <div className="space-y-5">
+          {/* Session time */}
+          <div>
+            <Label htmlFor="time-value" className="mb-2 block">
+              Session time
+            </Label>
+            <div className="flex items-center gap-6">
+              <Input
+                id="time-value"
+                type="number"
+                inputMode="decimal"
+                min={0}
+                step={1}
+                className="w-56"
+                value={timeValue}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  dispatch({
+                    type: "SetTimeValue",
+                    timeValue: e.currentTarget.valueAsNumber,
+                  })
+                }
+              />
+
+              <Select
+                value={timeUnit}
+                onValueChange={(val: string) =>
+                  dispatch({
+                    type: "SetTimeUnit",
+                    timeUnit: val as (typeof TimeUnit)[keyof typeof TimeUnit],
+                  })
+                }
+              >
+                <SelectTrigger id="timeframe" className="w-64">
+                  <SelectValue placeholder="Choose…" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={TimeUnit.Minutes}>
+                    {TimeUnit.Minutes}
+                  </SelectItem>
+                  <SelectItem value={TimeUnit.Hours}>
+                    {TimeUnit.Hours}
+                  </SelectItem>
+                  <SelectItem value={TimeUnit.Days}>{TimeUnit.Days}</SelectItem>
+                  <SelectItem value={TimeUnit.Months}>
+                    {TimeUnit.Months}
+                  </SelectItem>
+                  <SelectItem value={TimeUnit.Years}>
+                    {TimeUnit.Years}
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
-          <div className="mt-5">
-            <Label htmlFor="account-balance" className="mb-2">
+          {/* Starting balance */}
+          <div>
+            <Label htmlFor="account-balance" className="mb-2 block">
               Starting account balance
             </Label>
             <Input
@@ -84,10 +110,14 @@ export default function GameOptionsDialog() {
               inputMode="decimal"
               min={0}
               step={0.01}
-              placeholder="e.g. 0.50"
-              className="w-54"
+              className="w-56"
               value={accountBalance}
-              onChange={(e) => setAccountBalance(Number(e.target.value))}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                dispatch({
+                  type: "SetAccountBalance",
+                  accountBalance: e.currentTarget.valueAsNumber,
+                })
+              }
             />
           </div>
         </div>
