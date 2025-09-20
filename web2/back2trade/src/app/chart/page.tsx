@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
 import TradingChart from '@/components/chart/TradingChart';
-import TradeForm from '@/components/inputs/TradeForm';
+import TradeForm, { TradePosition } from '@/components/inputs/TradeForm';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 
@@ -11,18 +11,28 @@ export default function Home() {
   const [fast, setFast] = useState(20);
   const [slow, setSlow] = useState(50);
   const [metrics, setMetrics] = useState<any>(null);
-  const [tradeLines, setTradeLines] = useState<{ open: number; stopLoss: number; takeProfit: number } | undefined>(undefined);
+  const [positions, setPositions] = useState<TradePosition[]>([]);
 
   const handleMetricsUpdate = (newMetrics: any) => {
     setMetrics(newMetrics);
   };
 
-  const handleTradeSubmit = (data: { open: number; stopLoss: number; takeProfit: number }) => {
-    setTradeLines(data);
+  const handlePositionSubmit = (position: TradePosition) => {
+    setPositions(prev => [...prev, position]);
   };
 
-  const handleRemoveTrade = () => {
-    setTradeLines(undefined);
+  const handlePositionUpdate = (updatedPosition: TradePosition) => {
+    setPositions(prev => prev.map(pos => 
+      pos.id === updatedPosition.id ? updatedPosition : pos
+    ));
+  };
+
+  const handlePositionRemove = (positionId: string) => {
+    setPositions(prev => prev.filter(pos => pos.id !== positionId));
+  };
+
+  const handleRemoveAllPositions = () => {
+    setPositions([]);
   };
 
   return (
@@ -106,17 +116,7 @@ export default function Home() {
                 <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100">
                   {symbol} Chart ({interval})
                 </h2>
-                {tradeLines && (
-                  <Button
-                    onClick={handleRemoveTrade}
-                    variant="destructive"
-                    size="sm"
-                    className="flex items-center gap-2"
-                  >
-                    <span>×</span>
-                    Remove Trade
-                  </Button>
-                )}
+
               </div>
               <TradingChart 
                 symbol={symbol}
@@ -124,8 +124,9 @@ export default function Home() {
                 fast={fast}
                 slow={slow}
                 onMetricsUpdate={handleMetricsUpdate}
-                tradeLines={tradeLines}
-                onRemoveTrade={handleRemoveTrade}
+                positions={positions}
+                onPositionUpdate={handlePositionUpdate}
+                onPositionRemove={handlePositionRemove}
               />
             </div>
           </div>
@@ -135,10 +136,13 @@ export default function Home() {
             {/* Trade Form */}
             <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-6 border border-slate-200 dark:border-slate-700">
               <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-4">
-                Add Trade
+                Add Position
               </h3>
-              <TradeForm onSubmit={handleTradeSubmit} />
+              <TradeForm onSubmit={handlePositionSubmit} />
             </div>
+
+            {/* Positions List */}
+
 
             {/* Metrics */}
             {metrics && (
@@ -170,6 +174,64 @@ export default function Home() {
             )}
           </div>
         </div>
+        {positions.length > 0 && (
+              <div className="mt-6 bg-white dark:bg-slate-800 rounded-xl shadow-lg p-6 border border-slate-200 dark:border-slate-700">
+                <div className='flex justify-between'>
+                <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-4">
+                  Active Positions ({positions.length})
+                </h3>
+                {positions.length > 0 && (
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={handleRemoveAllPositions}
+                      variant="destructive"
+                      size="sm"
+                      className="flex items-center gap-2"
+                    >
+                      <span>×</span>
+                      Clear All
+                    </Button>
+                  </div>
+                )}
+                </div>
+                
+                <div className="space-y-3 max-h-60 overflow-y-auto">
+                  {positions.map((position) => (
+                    <div key={position.id} className="p-3 bg-slate-50 dark:bg-slate-700 rounded-lg">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className={`px-2 py-1 rounded text-xs font-medium ${
+                          position.type === 'long' 
+                            ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' 
+                            : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+                        }`}>
+                          {position.type.toUpperCase()}
+                        </span>
+                        <button
+                          onClick={() => handlePositionRemove(position.id)}
+                          className="text-red-500 hover:text-red-700 text-sm"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                      <div className="grid grid-cols-3 gap-2 text-xs">
+                        <div>
+                          <div className="text-slate-500 dark:text-slate-400">Entry</div>
+                          <div className="font-medium">{position.entry.toFixed(2)}</div>
+                        </div>
+                        <div>
+                          <div className="text-slate-500 dark:text-slate-400">SL</div>
+                          <div className="font-medium text-red-600">{position.stopLoss.toFixed(2)}</div>
+                        </div>
+                        <div>
+                          <div className="text-slate-500 dark:text-slate-400">TP</div>
+                          <div className="font-medium text-green-600">{position.takeProfit.toFixed(2)}</div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
       </div>
     </div>
   );

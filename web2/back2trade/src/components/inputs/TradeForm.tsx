@@ -3,11 +3,21 @@ import { useState } from "react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 
+export interface TradePosition {
+  id: string;
+  type: 'long' | 'short';
+  entry: number;
+  stopLoss: number;
+  takeProfit: number;
+  timestamp: number;
+}
+
 interface TradeFormProps {
-  onSubmit?: (data: { open: number; stopLoss: number; takeProfit: number }) => void;
+  onSubmit?: (data: TradePosition) => void;
 }
 
 export default function TradeForm({ onSubmit }: TradeFormProps) {
+  const [type, setType] = useState<'long' | 'short'>('long')
   const [open, setOpen] = useState("")
   const [sl, setSl] = useState("")
   const [tp, setTp] = useState("")
@@ -24,14 +34,29 @@ export default function TradeForm({ onSubmit }: TradeFormProps) {
       return
     }
     
-    console.log("Open:", openValue, "SL:", slValue, "TP:", tpValue)
+    // Validate stop loss and take profit based on position type
+    if (type === 'long') {
+      if (slValue >= openValue || tpValue <= openValue) {
+        alert("Dla pozycji LONG: Stop Loss musi być poniżej Entry, Take Profit powyżej Entry")
+        return
+      }
+    } else {
+      if (slValue <= openValue || tpValue >= openValue) {
+        alert("Dla pozycji SHORT: Stop Loss musi być powyżej Entry, Take Profit poniżej Entry")
+        return
+      }
+    }
     
     if (onSubmit) {
-      onSubmit({
-        open: openValue,
+      const tradePosition: TradePosition = {
+        id: `${type}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        type,
+        entry: openValue,
         stopLoss: slValue,
-        takeProfit: tpValue
-      })
+        takeProfit: tpValue,
+        timestamp: Date.now()
+      }
+      onSubmit(tradePosition)
     }
     
     // Clear form after submission
@@ -41,13 +66,43 @@ export default function TradeForm({ onSubmit }: TradeFormProps) {
   }
 
   const handleDefault = () => {
-    setOpen("116000")
-    setSl("115000")
-    setTp("117000")
+    if (type === 'long') {
+      setOpen("116000")
+      setSl("115000")
+      setTp("117000")
+    } else {
+      setOpen("116000")
+      setSl("117000")
+      setTp("115000")
+    }
   }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="space-y-2">
+        <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+          Position Type
+        </label>
+        <div className="flex gap-2">
+          <Button
+            type="button"
+            onClick={() => setType('long')}
+            variant={type === 'long' ? 'default' : 'outline'}
+            className={`flex-1 ${type === 'long' ? 'bg-green-600 hover:bg-green-700 text-white' : ''}`}
+          >
+            LONG
+          </Button>
+          <Button
+            type="button"
+            onClick={() => setType('short')}
+            variant={type === 'short' ? 'default' : 'outline'}
+            className={`flex-1 ${type === 'short' ? 'bg-red-600 hover:bg-red-700 text-white' : ''}`}
+          >
+            SHORT
+          </Button>
+        </div>
+      </div>
+
       <div className="space-y-2">
         <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
           Entry Price
