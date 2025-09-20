@@ -1,0 +1,22 @@
+{{- if and .Values.database.enabled .Values.database.persistence.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "back2trade.fullname" . }}-database-pvc
+  labels:
+    {{- include "back2trade.labels" . | nindent 4 }}
+    app.kubernetes.io/component: database
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.database.persistence.size }}
+  {{- if .Values.database.persistence.storageClass }}
+  {{- if (eq "-" .Values.database.persistence.storageClass) }}
+  storageClassName: ""
+  {{- else }}
+  storageClassName: "{{ .Values.database.persistence.storageClass }}"
+  {{- end }}
+  {{- end }}
+{{- end }}

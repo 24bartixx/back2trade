@@ -1,0 +1,87 @@
+{{- if and .Values.backend.enabled .Values.prisma.migrationJob.enabled }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "back2trade.fullname" . }}-prisma-migration
+  labels:
+    {{- include "back2trade.labels" . | nindent 4 }}
+    app.kubernetes.io/component: prisma-migration
+  annotations:
+    "helm.sh/hook": pre-install,pre-upgrade
+    "helm.sh/hook-weight": "-5"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  template:
+    metadata:
+      labels:
+        {{- include "back2trade.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: prisma-migration
+    spec:
+      restartPolicy: Never
+      {{- with .Values.podSecurityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "back2trade.serviceAccountName" . }}
+      containers:
+      - name: prisma-migration
+        {{- with .Values.securityContext }}
+        securityContext:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+        image: "{{ .Values.prisma.migrationJob.image.repository }}:{{ .Values.prisma.migrationJob.image.tag }}"
+        imagePullPolicy: {{ .Values.prisma.migrationJob.image.pullPolicy }}
+        command: ["/bin/sh"]
+        args:
+          - -c
+          - |
+            echo "Starting Prisma migration job..."
+            
+            # Wait for database to be ready
+            echo "Waiting for database connection..."
+            until npx prisma db push --accept-data-loss --force-reset; do
+              echo "Database is unavailable - sleeping"
+              sleep 5
+            done
+            
+            echo "Database is ready!"
+            
+            # Generate Prisma client
+            echo "Generating Prisma client..."
+            npx prisma generate
+            
+            # Run database migrations
+            echo "Running Prisma migrations..."
+            npx prisma migrate deploy
+            
+            {{- if .Values.prisma.migrations.seed }}
+            # Seed database if enabled
+            echo "Seeding database..."
+            npx prisma db seed
+            {{- end }}
+            
+            echo "Prisma migration job completed successfully!"
+        env:
+        - name: DATABASE_URL
+          value: "postgresql://{{ .Values.database.env.POSTGRES_USER }}:{{ .Values.database.env.POSTGRES_PASSWORD }}@{{ include "back2trade.fullname" . }}-database:{{ .Values.database.service.port }}/{{ .Values.database.env.POSTGRES_DB }}?schema=public"
+        - name: NODE_ENV
+          value: "production"
+        {{- with .Values.resources.backend }}
+        resources:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+  backoffLimit: 3
+  ttlSecondsAfterFinished: 120
+{{- end }}

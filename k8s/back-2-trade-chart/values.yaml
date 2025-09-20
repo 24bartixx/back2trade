@@ -1,0 +1,175 @@
+replicaCount: 2
+
+backend:
+  enabled: true
+  image:
+    repository: YOUR_REGISTRY/back2trade-backend
+    tag: latest
+    pullPolicy: Always
+  service:
+    type: ClusterIP
+    port: 3001
+  env:
+    NODE_ENV: production
+    PORT: "3001"
+    DATABASE_URL: "postgresql://back2trade:password@back2trade-database:5432/back2trade?schema=public"
+    PRISMA_SEED: "false"
+
+frontend:
+  enabled: true
+  image:
+    repository: YOUR_REGISTRY/back2trade-frontend
+    tag: latest
+    pullPolicy: Always
+  service:
+    type: ClusterIP
+    port: 3000
+  env:
+    NODE_ENV: development
+    PORT: "3000"
+    NEXT_PUBLIC_API_URL: "http://back2trade-backend:3001/api"
+
+# Database configuration (PostgreSQL for Prisma)
+database:
+  enabled: true
+  image:
+    repository: postgres
+    tag: "15-alpine"
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 5432
+  env:
+    POSTGRES_DB: "back2trade"
+    POSTGRES_USER: "back2trade"
+    POSTGRES_PASSWORD: "password"
+  persistence:
+    enabled: true
+    size: 1Gi
+    storageClass: ""
+
+# Prisma configuration
+prisma:
+  migrations:
+    enabled: true
+    # Run seed on first deployment
+    seed: false
+  # Database migration job settings
+  migrationJob:
+    enabled: false
+    image:
+      repository: YOUR_REGISTRY/back2trade-backend
+      tag: latest
+      pullPolicy: Always
+
+# Simple auto-update configuration
+autoUpdate:
+  enabled: true
+  # Force pod restart annotation to trigger updates
+  restartPolicy: "Always"
+
+# Ingress configuration
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+  hosts:
+    - host: back2trade.local
+      paths:
+        - path: /
+          pathType: Prefix
+          service: frontend
+        - path: /api
+          pathType: Prefix
+          service: backend
+  tls: []
+
+# Secrets for external APIs
+secrets:
+  finnhub:
+    token: ""
+    api: "https://finnhub.io/api/v1"
+  database:
+    url: "postgresql://back2trade:password@back2trade-database:5432/back2trade?schema=public"
+
+# Service account
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""
+
+# Pod security context
+podSecurityContext: {}
+
+# Security context
+securityContext: {}
+
+# Resources
+resources:
+  backend:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 250m
+      memory: 256Mi
+  frontend:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 250m
+      memory: 256Mi
+  database:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 250m
+      memory: 256Mi
+
+# Node selector
+nodeSelector: {}
+
+# Tolerations
+tolerations: []
+
+# Affinity
+affinity: {}
+
+# Health checks
+healthChecks:
+  backend:
+    livenessProbe:
+      httpGet:
+        path: /
+        port: 3001
+      initialDelaySeconds: 60
+      periodSeconds: 30
+      timeoutSeconds: 10
+      failureThreshold: 3
+    readinessProbe:
+      httpGet:
+        path: /
+        port: 3001
+      initialDelaySeconds: 30
+      periodSeconds: 10
+      timeoutSeconds: 5
+      failureThreshold: 3
+  frontend:
+    livenessProbe:
+      httpGet:
+        path: /
+        port: 3000
+      initialDelaySeconds: 30
+      periodSeconds: 10
+      timeoutSeconds: 5
+      failureThreshold: 3
+    readinessProbe:
+      httpGet:
+        path: /
+        port: 3000
+      initialDelaySeconds: 10
+      periodSeconds: 5
+      timeoutSeconds: 3
+      failureThreshold: 3

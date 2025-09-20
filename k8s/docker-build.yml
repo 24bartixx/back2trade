@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: k8s/backend/Dockerfile
+      target: production
+      args:
+        - NODE_ENV=production
+      cache_from:
+        - node:20-alpine
+        - ${DOCKER_USERNAME}/back2trade-backend:latest
+    image: ${DOCKER_USERNAME}/back2trade-backend:${IMAGE_TAG:-latest}
+    platform: linux/amd64
+    networks:
+      - back2trade-network
+
+  frontend:
+    build:
+      context: .
+      dockerfile: k8s/frontend/Dockerfile
+      target: production
+      args:
+        - NODE_ENV=production
+        - NEXT_TELEMETRY_DISABLED=1
+      cache_from:
+        - node:20-alpine
+        - ${DOCKER_USERNAME}/back2trade-frontend:latest
+    image: ${DOCKER_USERNAME}/back2trade-frontend:${IMAGE_TAG:-latest}
+    platform: linux/amd64
+    networks:
+      - back2trade-network
+
+networks:
+  back2trade-network:
+    driver: bridge
+
+# Example usage:
+# 1. Set environment variables:
+#    export DOCKER_USERNAME=yourusername
+#    export IMAGE_TAG=v1.0.0
+#
+# 2. Build images:
+#    docker-compose -f docker-build.yml build
+#
+# 3. Push to Docker Hub:
+#    docker-compose -f docker-build.yml push
+#
+# 4. Build and push in one command:
+#    docker-compose -f docker-build.yml build --push
+#
+# 5. Build with specific tag:
+#    IMAGE_TAG=v1.2.3 docker-compose -f docker-build.yml build --push
