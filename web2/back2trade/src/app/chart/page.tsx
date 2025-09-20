@@ -1,10 +1,12 @@
 'use client';
-import { useState, useEffect, useCallback } from 'react';
-import TradingChart from '@/components/chart/TradingChart';
-import TradeForm, { TradePosition } from '@/components/inputs/TradeForm';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
+
 import { useGameOptions } from '@/providers/game-options-provider';
+
+import { useState, useEffect, useCallback } from "react";
+import TradingChart from "@/components/chart/TradingChart";
+import TradeForm, { TradePosition } from "@/components/inputs/TradeForm";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
 export default function Home() {
   const [symbol, setSymbol] = useState("BTCUSDT");
@@ -13,7 +15,9 @@ export default function Home() {
   const [slow, setSlow] = useState(50);
   const [metrics, setMetrics] = useState<any>(null);
   const [positions, setPositions] = useState<TradePosition[]>([]);
-  
+
+  // Current price tracking
+  const [currentPrice, setCurrentPrice] = useState<number | null>(null);
 
   const settings = useGameOptions();
   
@@ -21,9 +25,6 @@ export default function Home() {
   let startDate = settings.state.startDate || new Date("2023-09-11T00:00:00Z");
   startDate = new Date(startDate.getTime() + 24 * 60 * 60 * 1000);
   const endDate = settings.state.finishDate || new Date("2023-09-14T23:59:59Z");
-
-  // Current price tracking
-  const [currentPrice, setCurrentPrice] = useState<number | null>(null);
 
   // Memoize the price change handler to avoid re-renders
   const handleCurrentPriceChange = useCallback((price: number) => {
@@ -69,8 +70,8 @@ export default function Home() {
               </div>
               <TradingChart
                 symbol="BTCUSDT"
-                startDate={new Date("2023-09-11T00:00:00Z")}
-                endDate={new Date("2023-09-14T23:59:59Z")}
+                startDate={startDate}
+                endDate={endDate}
                 positions={positions}
                 onPositionUpdate={handlePositionUpdate}
                 onPositionRemove={handlePositionRemove}
@@ -98,48 +99,8 @@ export default function Home() {
                 <option value="1d">1 Day</option>
               </select>
             </div>
-            
-          </div>
-        </div>
-
-        {/* Main Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          {/* Chart Section */}
-          <div className="lg:col-span-3">
-            <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-6 border border-slate-200 dark:border-slate-700">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100">
-                  {symbol} Chart ({interval})
-                </h2>
-
-              </div>
-            <TradingChart
-              symbol="BTCUSDT"
-              startDate={startDate}
-              endDate={endDate}
-              positions={positions}
-              onPositionUpdate={handlePositionUpdate}
-              onPositionRemove={handlePositionRemove}
-              onCurrentPriceChange={handleCurrentPriceChange}
-            />
-            </div>
-          </div>
-
-          {/* Sidebar */}
-          <div className="space-y-6">
-            {/* Trade Form */}
-            <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-6 border border-slate-200 dark:border-slate-700">
-              <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-4">
-                Add Position
-              </h3>
-              <TradeForm onSubmit={handlePositionSubmit} />
-            </div>
-
-            {/* Positions List */}
-
-
-            {/* Metrics */}
-            {metrics && (
+            <div className="space-y-6">
+              {/* Trade Form */}
               <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-6 border border-slate-200 dark:border-slate-700">
                 <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-4">
                   Add Position
