@@ -1,17 +1,14 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
-import { DatabaseService } from '../database/database.service';
+import { Injectable, NotFoundException } from "@nestjs/common";
+import { CreateUserDto } from "./dto/create-user.dto";
+import { UpdateUserDto } from "./dto/update-user.dto";
+import { DatabaseService } from "../database/database.service";
 
 @Injectable()
 export class UsersService {
   constructor(private database: DatabaseService) {}
 
-  async findMetadataOrFail(email: string) {
+  async findMetadata(email: string) {
     const user = await this.database.user.findUnique({ where: { email } });
-    if (user === null) {
-      throw new NotFoundException('User were not found');
-    }
 
     return user;
   }
@@ -44,7 +41,7 @@ export class UsersService {
       }
     });
     if (user === null) {
-      throw new NotFoundException('User not found');
+      throw new NotFoundException("User not found");
     }
 
     return user;
