@@ -38,18 +38,24 @@ export default function GameOptionsDialog() {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button>Start a game</Button>
+        <Button
+          size="lg"
+          variant="outline"
+          className="px-10 bg-transparent text-white"
+        >
+          Start a game
+        </Button>
       </DialogTrigger>
 
-      <DialogContent className="sm:max-w-3xl">
+      <DialogContent className="sm:max-w-3x">
         <DialogHeader>
-          <DialogTitle>Session options</DialogTitle>
-          <DialogDescription>
+          <DialogTitle className="text-2xl">Session options</DialogTitle>
+          <DialogDescription className="text-white text-md">
             Pick a session date range and your starting balance.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-6">
+        <div className="space-y-6 mt-2">
           {/* Start date */}
           <div>
             <Label htmlFor="start-date" className="mb-2 block">
@@ -110,7 +116,6 @@ export default function GameOptionsDialog() {
                   onSelect={(d) =>
                     dispatch({ type: "SetFinishDate", finishDate: d ?? null })
                   }
-                  initialFocus
                 />
               </PopoverContent>
             </Popover>
@@ -139,9 +144,9 @@ export default function GameOptionsDialog() {
           </div>
         </div>
 
-        <DialogFooter className="sm:justify-end">
+        <DialogFooter className="sm:justify-end mt-4">
           <DialogClose asChild>
-            <Button variant="secondary">Cancel</Button>
+            <Button variant="outline">Cancel</Button>
           </DialogClose>
           <Button asChild className="px-6">
             <Link href="/chart">Start</Link>
