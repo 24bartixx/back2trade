@@ -16,18 +16,22 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { TimeUnit } from "@/types/game-options";
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+} from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { Calendar as CalendarIcon } from "lucide-react";
+import { format } from "date-fns";
+
 import { useGameOptions } from "@/providers/game-options-provider";
+
+// If you use shadcn's cn helper; otherwise remove cn(...) and keep plain classes
+import { cn } from "@/lib/utils";
 
 export default function GameOptionsDialog() {
   const { state, dispatch } = useGameOptions();
-  const { timeValue, timeUnit, accountBalance } = state;
+  const { startDate, finishDate, startingAccountBalance } = state;
 
   console.log(state);
 
@@ -41,62 +45,75 @@ export default function GameOptionsDialog() {
         <DialogHeader>
           <DialogTitle>Session options</DialogTitle>
           <DialogDescription>
-            Choose session parameters to adjust your gameplay
+            Pick a session date range and your starting balance.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-5">
-          {/* Session time */}
+        <div className="space-y-6">
+          {/* Start date */}
           <div>
-            <Label htmlFor="time-value" className="mb-2 block">
-              Session time
+            <Label htmlFor="start-date" className="mb-2 block">
+              Start date
             </Label>
-            <div className="flex items-center gap-6">
-              <Input
-                id="time-value"
-                type="number"
-                inputMode="decimal"
-                min={0}
-                step={1}
-                className="w-56"
-                value={timeValue}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                  dispatch({
-                    type: "SetTimeValue",
-                    timeValue: e.currentTarget.valueAsNumber,
-                  })
-                }
-              />
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  id="start-date"
+                  variant="outline"
+                  className={cn(
+                    "w-64 justify-start text-left font-normal",
+                    !startDate && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {startDate ? format(startDate, "PPP") : "Pick a start date"}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={startDate ?? undefined}
+                  onSelect={(d) =>
+                    dispatch({ type: "SetStartDate", startDate: d ?? null })
+                  }
+                  initialFocus
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
 
-              <Select
-                value={timeUnit}
-                onValueChange={(val: string) =>
-                  dispatch({
-                    type: "SetTimeUnit",
-                    timeUnit: val as (typeof TimeUnit)[keyof typeof TimeUnit],
-                  })
-                }
-              >
-                <SelectTrigger id="timeframe" className="w-64">
-                  <SelectValue placeholder="Choose…" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value={TimeUnit.Minutes}>
-                    {TimeUnit.Minutes}
-                  </SelectItem>
-                  <SelectItem value={TimeUnit.Hours}>
-                    {TimeUnit.Hours}
-                  </SelectItem>
-                  <SelectItem value={TimeUnit.Days}>{TimeUnit.Days}</SelectItem>
-                  <SelectItem value={TimeUnit.Months}>
-                    {TimeUnit.Months}
-                  </SelectItem>
-                  <SelectItem value={TimeUnit.Years}>
-                    {TimeUnit.Years}
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+          {/* Finish date */}
+          <div>
+            <Label htmlFor="finish-date" className="mb-2 block">
+              Finish date
+            </Label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  id="finish-date"
+                  variant="outline"
+                  className={cn(
+                    "w-64 justify-start text-left font-normal",
+                    !finishDate && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {finishDate
+                    ? format(finishDate, "PPP")
+                    : "Pick a finish date"}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={finishDate ?? undefined}
+                  onSelect={(d) =>
+                    dispatch({ type: "SetFinishDate", finishDate: d ?? null })
+                  }
+                  initialFocus
+                />
+              </PopoverContent>
+            </Popover>
           </div>
 
           {/* Starting balance */}
@@ -111,7 +128,7 @@ export default function GameOptionsDialog() {
               min={0}
               step={0.01}
               className="w-56"
-              value={accountBalance}
+              value={startingAccountBalance}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                 dispatch({
                   type: "SetAccountBalance",

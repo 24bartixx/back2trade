@@ -1,33 +1,27 @@
 "use client";
 
 import React, { createContext, useContext, useReducer } from "react";
-import { TimeUnit } from "@/types/game-options";
-
-export type GameOptions = {
-  timeUnit: (typeof TimeUnit)[keyof typeof TimeUnit];
-  timeValue: number;
-  accountBalance: number; // <- consistent name
-};
+import { GameOptions } from "@/types/game-options";
 
 type Action =
-  | { type: "SetTimeUnit"; timeUnit: GameOptions["timeUnit"] }
-  | { type: "SetTimeValue"; timeValue: number }
+  | { type: "SetStartDate"; startDate: Date | null }
+  | { type: "SetFinishDate"; finishDate: Date | null }
   | { type: "SetAccountBalance"; accountBalance: number };
 
 const INITIAL_STATE: GameOptions = {
-  timeUnit: TimeUnit.Months,
-  timeValue: 10,
-  accountBalance: 10_000,
+  startDate: null,
+  finishDate: null,
+  startingAccountBalance: 10_000,
 };
 
 function gameOptionsReducer(state: GameOptions, action: Action): GameOptions {
   switch (action.type) {
-    case "SetTimeUnit":
-      return { ...state, timeUnit: action.timeUnit };
-    case "SetTimeValue":
-      return { ...state, timeValue: action.timeValue };
+    case "SetStartDate":
+      return { ...state, startDate: action.startDate };
+    case "SetFinishDate":
+      return { ...state, finishDate: action.finishDate };
     case "SetAccountBalance":
-      return { ...state, accountBalance: action.accountBalance };
+      return { ...state, startingAccountBalance: action.accountBalance };
     default: {
       const _exhaustive: never = action;
       return state;
