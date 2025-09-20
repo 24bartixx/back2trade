@@ -103,7 +103,7 @@ export function HeroGeometric({
   return (
     <div
       className={cn(
-        "relative min-h-screen w-full flex items-center justify-center overflow-hidden bg-[#030303]",
+        "relative h-[85vh] w-full flex items-center justify-center overflow-hidden bg-[#030303]",
         className
       )}
     >
@@ -178,18 +178,13 @@ export function HeroGeometric({
               </span>
             </h1>
           </motion.div>
-
           <motion.div
-            custom={2}
+            custom={1}
             variants={fadeUpVariants}
             initial="hidden"
             animate="visible"
+            className="mt-12 mb-32"
           >
-            <p className="text-base sm:text-lg md:text-xl text-white/40 mb-8 leading-relaxed font-light tracking-wide max-w-xl mx-auto px-4">
-              {description}
-            </p>
-          </motion.div>
-          <motion.div>
             <GameOptionsDialog />
           </motion.div>
         </div>

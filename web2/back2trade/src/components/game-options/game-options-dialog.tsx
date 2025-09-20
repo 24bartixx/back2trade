@@ -25,8 +25,6 @@ import { Calendar as CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
 
 import { useGameOptions } from "@/providers/game-options-provider";
-
-// If you use shadcn's cn helper; otherwise remove cn(...) and keep plain classes
 import { cn } from "@/lib/utils";
 
 export default function GameOptionsDialog() {
