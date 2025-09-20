@@ -1,20 +1,19 @@
+import Link from "next/link";
 import { Button } from "../ui/button";
 
 const Navbar = () => (
-  <div className="w-full bg-black h-[15vh]">
+  <div className="w-full bg-black h-[10vh]">
     <div className="flex flex-row l justify-between mx-52 text-center h-full items-center">
-      <div className="flex flex-row gap-16">
+      <Link href="/">
         <h1 className="text-white text-2xl">Back2Trade</h1>
-        <Button variant="link" className="text-white text-lg">
-          Home
-        </Button>
-      </div>
+      </Link>
+
       <div>
         <Button variant="link" className="text-white text-lg">
-          Login
+          <Link href="/login">Login</Link>
         </Button>
         <Button variant="link" className="text-red-400 text-lg">
-          Logout
+          <Link href="/login">Logout</Link>
         </Button>
       </div>
     </div>

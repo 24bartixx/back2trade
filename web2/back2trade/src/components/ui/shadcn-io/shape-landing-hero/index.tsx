@@ -103,7 +103,7 @@ export function HeroGeometric({
   return (
     <div
       className={cn(
-        "relative h-[85vh] w-full flex items-center justify-center overflow-hidden bg-[#030303]",
+        "relative h-[90vh] w-full flex items-center justify-center overflow-hidden bg-[#030303]",
         className
       )}
     >
