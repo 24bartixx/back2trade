@@ -38,7 +38,9 @@ export class AuthService {
     };
   }
 
-  async register(createUserDto: CreateUserDto): Promise<CreateUserResponseDto> {
+  async register(
+    createUserDto: CreateUserDto
+  ): Promise<{ access_token: string }> {
     const { email, password, username } = createUserDto;
 
     const userInBase = await this.usersService.findMetadata(email);
@@ -51,16 +53,12 @@ export class AuthService {
     const salt = 10;
     const hashedPassword = await hash(password, salt);
 
-    const user = await this.usersService.create({
+    await this.usersService.create({
       email,
       password: hashedPassword,
       username
     });
 
-    return {
-      email: user.email,
-      username: user.username,
-      message: "User created"
-    };
+    return await this.signIn({ email, password });
   }
 }
