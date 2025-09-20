@@ -29,9 +29,7 @@ import { cn } from "@/lib/utils";
 
 export default function GameOptionsDialog() {
   const { state, dispatch } = useGameOptions();
-  const { startDate, finishDate, startingAccountBalance } = state;
-
-  console.log(state);
+  const { startDate, finishDate, startingAccountBalance, cryptoSymbol } = state;
 
   return (
     <Dialog>
@@ -52,6 +50,24 @@ export default function GameOptionsDialog() {
             Pick a session date range and your starting balance.
           </DialogDescription>
         </DialogHeader>
+
+        <div>
+          <Label htmlFor="crypto-symbol" className="mb-2 block">
+            Symbol of a cryptocurrency
+          </Label>
+          <Input
+            id="crypto-symbol"
+            className="w-full"
+            placeholder="BTC"
+            value={cryptoSymbol}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+              dispatch({
+                type: "SetCryptoSymbol",
+                cryptoSymbol: e.target.value,
+              })
+            }
+          />
+        </div>
 
         <div className="space-y-6 mt-2">
           {/* Start date */}

@@ -1,16 +1,21 @@
-'use client';
+"use client";
 
-import { useGameOptions } from '@/providers/game-options-provider';
+import { useGameOptions } from "@/providers/game-options-provider";
 
 import { useState, useEffect, useCallback } from "react";
 import TradingChart from "@/components/chart/TradingChart";
 import TradeForm, { TradePosition } from "@/components/inputs/TradeForm";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export default function Home() {
-  const [symbol, setSymbol] = useState("BTCUSDT");
   const [interval, setInterval_] = useState("1h");
   const [fast, setFast] = useState(20);
   const [slow, setSlow] = useState(50);
@@ -28,6 +33,7 @@ export default function Home() {
   let startDate = settings.state.startDate || new Date("2023-09-11T00:00:00Z");
   startDate = new Date(startDate.getTime() + 24 * 60 * 60 * 1000);
   const endDate = settings.state.finishDate || new Date("2023-09-14T23:59:59Z");
+  const cryptoSymbol = settings.state.cryptoSymbol;
 
   // Memoize the price change handler to avoid re-renders
   const handleCurrentPriceChange = useCallback((price: number) => {
@@ -73,7 +79,7 @@ export default function Home() {
             <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-6 border border-slate-200 dark:border-slate-700 py-7">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100">
-                  {symbol} Chart ({interval})
+                  {cryptoSymbol} Chart ({interval})
                 </h2>
               </div>
               <TradingChart
@@ -87,7 +93,6 @@ export default function Home() {
                 onCurrentPriceChange={handleCurrentPriceChange}
                 onNextReady={handleNextReady}
               />
-
             </div>
           </div>
           {/* Sidebar */}

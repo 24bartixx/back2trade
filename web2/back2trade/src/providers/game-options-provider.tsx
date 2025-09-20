@@ -6,12 +6,14 @@ import { GameOptions } from "@/types/game-options";
 type Action =
   | { type: "SetStartDate"; startDate: Date | null }
   | { type: "SetFinishDate"; finishDate: Date | null }
-  | { type: "SetAccountBalance"; accountBalance: number };
+  | { type: "SetAccountBalance"; accountBalance: number }
+  | { type: "SetCryptoSymbol"; cryptoSymbol: string };
 
 const INITIAL_STATE: GameOptions = {
   startDate: null,
   finishDate: null,
   startingAccountBalance: 10_000,
+  cryptoSymbol: "",
 };
 
 function gameOptionsReducer(state: GameOptions, action: Action): GameOptions {
@@ -22,6 +24,8 @@ function gameOptionsReducer(state: GameOptions, action: Action): GameOptions {
       return { ...state, finishDate: action.finishDate };
     case "SetAccountBalance":
       return { ...state, startingAccountBalance: action.accountBalance };
+    case "SetCryptoSymbol":
+      return { ...state, cryptoSymbol: action.cryptoSymbol };
     default: {
       const _exhaustive: never = action;
       return state;
