@@ -18,9 +18,10 @@ interface TradingChartProps {
   slow: number;
   onMetricsUpdate?: (metrics: any) => void;
   tradeLines?: TradeLine;
+  onRemoveTrade?: () => void;
 }
 
-export default function TradingChart({ symbol, interval, fast, slow, onMetricsUpdate, tradeLines }: TradingChartProps) {
+export default function TradingChart({ symbol, interval, fast, slow, onMetricsUpdate, tradeLines, onRemoveTrade }: TradingChartProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const seriesRef = useRef<ISeriesApi<'Candlestick'> | null>(null);
   const markersPluginRef = useRef<any>(null);
@@ -33,6 +34,8 @@ export default function TradingChart({ symbol, interval, fast, slow, onMetricsUp
   const [candles, setCandles] = useState<Candle[]>([]);
   const [markers, setMarkers] = useState<Marker[]>([]);
   const [metrics, setMetrics] = useState<any>(null);
+  const [isDragging, setIsDragging] = useState<string | null>(null);
+  const [dragStartPrice, setDragStartPrice] = useState<number | null>(null);
 
   // --- init chart ---
   useEffect(() => {
@@ -131,7 +134,104 @@ export default function TradingChart({ symbol, interval, fast, slow, onMetricsUp
       axisLabelVisible: true,
       title: 'Take Profit',
     });
-  }, [tradeLines]);
+
+    // Add mouse event listeners for dragging
+    const handleMouseDown = (event: MouseEvent) => {
+      if (!chartRef.current || !seriesRef.current) return;
+      
+      const rect = containerRef.current?.getBoundingClientRect();
+      if (!rect) return;
+      
+      const y = event.clientY - rect.top;
+      
+      // Check if click is near any price line title
+      const price = seriesRef.current.coordinateToPrice(y);
+      if (!price) return;
+      
+      // Calculate tolerance based on price range
+      const priceRange = Math.max(tradeLines.open, tradeLines.stopLoss, tradeLines.takeProfit) - 
+                        Math.min(tradeLines.open, tradeLines.stopLoss, tradeLines.takeProfit);
+      const tolerance = priceRange * 0.02; // 2% of price range
+      
+      if (Math.abs(price - tradeLines.open) < tolerance) {
+        setIsDragging('open');
+        setDragStartPrice(tradeLines.open);
+      } else if (Math.abs(price - tradeLines.stopLoss) < tolerance) {
+        setIsDragging('stopLoss');
+        setDragStartPrice(tradeLines.stopLoss);
+      } else if (Math.abs(price - tradeLines.takeProfit) < tolerance) {
+        setIsDragging('takeProfit');
+        setDragStartPrice(tradeLines.takeProfit);
+      }
+    };
+
+    const handleMouseMove = (event: MouseEvent) => {
+      if (!isDragging || !seriesRef.current || !chartRef.current) return;
+      
+      const rect = containerRef.current?.getBoundingClientRect();
+      if (!rect) return;
+      
+      const y = event.clientY - rect.top;
+      const newPrice = seriesRef.current.coordinateToPrice(y);
+      
+      if (!newPrice) return;
+      
+      // Update the appropriate line
+      if (isDragging === 'open' && openLineRef.current) {
+        seriesRef.current.removePriceLine(openLineRef.current);
+        openLineRef.current = seriesRef.current.createPriceLine({
+          price: newPrice,
+          color: '#FFD700',
+          lineWidth: 2,
+          lineStyle: 0,
+          axisLabelVisible: true,
+          title: 'Open',
+        });
+      } else if (isDragging === 'stopLoss' && stopLossLineRef.current) {
+        seriesRef.current.removePriceLine(stopLossLineRef.current);
+        stopLossLineRef.current = seriesRef.current.createPriceLine({
+          price: newPrice,
+          color: '#FF0000',
+          lineWidth: 2,
+          lineStyle: 0,
+          axisLabelVisible: true,
+          title: 'Stop Loss',
+        });
+      } else if (isDragging === 'takeProfit' && takeProfitLineRef.current) {
+        seriesRef.current.removePriceLine(takeProfitLineRef.current);
+        takeProfitLineRef.current = seriesRef.current.createPriceLine({
+          price: newPrice,
+          color: '#00FF00',
+          lineWidth: 2,
+          lineStyle: 0,
+          axisLabelVisible: true,
+          title: 'Take Profit',
+        });
+      }
+    };
+
+    const handleMouseUp = () => {
+      setIsDragging(null);
+      setDragStartPrice(null);
+    };
+
+    // Add event listeners
+    const container = containerRef.current;
+    if (container) {
+      container.addEventListener('mousedown', handleMouseDown);
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+    }
+
+    // Cleanup function
+    return () => {
+      if (container) {
+        container.removeEventListener('mousedown', handleMouseDown);
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+      }
+    };
+  }, [tradeLines, isDragging]);
 
   // --- SMA helper ---
   function sma(values: number[], length: number) {
@@ -147,98 +247,98 @@ export default function TradingChart({ symbol, interval, fast, slow, onMetricsUp
     return res;
   }
 
-  // --- backtest SMA cross ---
-  function runBacktest() {
-    if (candles.length === 0) return;
+//   // --- backtest SMA cross ---
+//   function runBacktest() {
+//     if (candles.length === 0) return;
   
-    const closes = candles.map(c => c.close);
-    const smaFast = sma(closes, fast);
-    const smaSlow = sma(closes, slow);
+//     const closes = candles.map(c => c.close);
+//     const smaFast = sma(closes, fast);
+//     const smaSlow = sma(closes, slow);
   
-    let position = 0; // 0 = flat, 1 = long, -1 = short
-    let equity = 1;
-    const trades: any[] = [];
-    const markers: Marker[] = [];
+//     let position = 0; // 0 = flat, 1 = long, -1 = short
+//     let equity = 1;
+//     const trades: any[] = [];
+//     const markers: Marker[] = [];
   
-    let entryPrice = 0;
+//     let entryPrice = 0;
   
-    for (let i = 1; i < candles.length; i++) {
-      if (smaFast[i] && smaSlow[i]) {
-        // cross up → sygnał long
-        if (smaFast[i]! > smaSlow[i]! && smaFast[i - 1]! <= smaSlow[i - 1]!) {
-          // zamknij shorta, jeśli był
-          if (position === -1) {
-            const exitPrice = candles[i].close;
-            const ret = (entryPrice / exitPrice - 1); // short zysk = odwrotnie
-            equity *= 1 + ret;
-            trades.push({ side: "short", entry: entryPrice, exit: exitPrice, ret });
-            markers.push({ time: candles[i].time, position: 'aboveBar', shape: 'arrowDown', text: 'Short exit', color: 'orange' });
+//     for (let i = 1; i < candles.length; i++) {
+//       if (smaFast[i] && smaSlow[i]) {
+//         // cross up → sygnał long
+//         if (smaFast[i]! > smaSlow[i]! && smaFast[i - 1]! <= smaSlow[i - 1]!) {
+//           // zamknij shorta, jeśli był
+//           if (position === -1) {
+//             const exitPrice = candles[i].close;
+//             const ret = (entryPrice / exitPrice - 1); // short zysk = odwrotnie
+//             equity *= 1 + ret;
+//             trades.push({ side: "short", entry: entryPrice, exit: exitPrice, ret });
+//             markers.push({ time: candles[i].time, position: 'aboveBar', shape: 'arrowDown', text: 'Short exit', color: 'orange' });
 
-            if (entryLineRef.current) {
-                seriesRef.current?.removePriceLine(entryLineRef.current);
-                entryLineRef.current = null;
-              }
-          }
-          // otwórz longa
-          position = 1;
-          entryPrice = candles[i].close;
-          markers.push({ time: candles[i].time, position: 'belowBar', shape: 'arrowUp', text: 'Long entry', color: 'green' });
+//             if (entryLineRef.current) {
+//                 seriesRef.current?.removePriceLine(entryLineRef.current);
+//                 entryLineRef.current = null;
+//               }
+//           }
+//           // otwórz longa
+//           position = 1;
+//           entryPrice = candles[i].close;
+//           markers.push({ time: candles[i].time, position: 'belowBar', shape: 'arrowUp', text: 'Long entry', color: 'green' });
 
-          entryLineRef.current = seriesRef.current?.createPriceLine({
-            price: entryPrice,
-            color: 'green',
-            lineWidth: 2,
-            lineStyle: 2, // dashed
-            axisLabelVisible: true,
-            title: 'LONG',
-          });
-        }
+//           entryLineRef.current = seriesRef.current?.createPriceLine({
+//             price: entryPrice,
+//             color: 'green',
+//             lineWidth: 2,
+//             lineStyle: 2, // dashed
+//             axisLabelVisible: true,
+//             title: 'LONG',
+//           });
+//         }
   
-        // cross down → sygnał short
-        if (smaFast[i]! < smaSlow[i]! && smaFast[i - 1]! >= smaSlow[i - 1]!) {
-          // zamknij longa, jeśli był
-          if (position === 1) {
-            const exitPrice = candles[i].close;
-            const ret = exitPrice / entryPrice - 1;
-            equity *= 1 + ret;
-            trades.push({ side: "long", entry: entryPrice, exit: exitPrice, ret });
-            markers.push({ time: candles[i].time, position: 'aboveBar', shape: 'arrowDown', text: 'Long exit', color: 'red' });
+//         // cross down → sygnał short
+//         if (smaFast[i]! < smaSlow[i]! && smaFast[i - 1]! >= smaSlow[i - 1]!) {
+//           // zamknij longa, jeśli był
+//           if (position === 1) {
+//             const exitPrice = candles[i].close;
+//             const ret = exitPrice / entryPrice - 1;
+//             equity *= 1 + ret;
+//             trades.push({ side: "long", entry: entryPrice, exit: exitPrice, ret });
+//             markers.push({ time: candles[i].time, position: 'aboveBar', shape: 'arrowDown', text: 'Long exit', color: 'red' });
 
-            if (entryLineRef.current) {
-                seriesRef.current?.removePriceLine(entryLineRef.current);
-                entryLineRef.current = null;
-              }
-          }
-          // otwórz shorta
-          position = -1;
-          entryPrice = candles[i].close;
-          markers.push({ time: candles[i].time, position: 'aboveBar', shape: 'arrowDown', text: 'Short entry', color: 'blue' });
+//             if (entryLineRef.current) {
+//                 seriesRef.current?.removePriceLine(entryLineRef.current);
+//                 entryLineRef.current = null;
+//               }
+//           }
+//           // otwórz shorta
+//           position = -1;
+//           entryPrice = candles[i].close;
+//           markers.push({ time: candles[i].time, position: 'aboveBar', shape: 'arrowDown', text: 'Short entry', color: 'blue' });
 
-          entryLineRef.current = seriesRef.current?.createPriceLine({
-            price: entryPrice,
-            color: 'red',
-            lineWidth: 2,
-            lineStyle: 2,
-            axisLabelVisible: true,
-            title: 'SHORT',
-          });
-        }
-      }
-    }
+//           entryLineRef.current = seriesRef.current?.createPriceLine({
+//             price: entryPrice,
+//             color: 'red',
+//             lineWidth: 2,
+//             lineStyle: 2,
+//             axisLabelVisible: true,
+//             title: 'SHORT',
+//           });
+//         }
+//       }
+//     }
   
-    // metryki
-    const pnl = equity - 1;
-    const winRate = trades.length ? trades.filter(t => t.ret > 0).length / trades.length : 0;
+//     // metryki
+//     const pnl = equity - 1;
+//     const winRate = trades.length ? trades.filter(t => t.ret > 0).length / trades.length : 0;
   
-    setMarkers(markers);
-    markersPluginRef.current?.setMarkers(markers);
-    setMetrics({ trades: trades.length, pnl, winRate });
+//     setMarkers(markers);
+//     markersPluginRef.current?.setMarkers(markers);
+//     setMetrics({ trades: trades.length, pnl, winRate });
     
-    // Notify parent component about metrics update
-    if (onMetricsUpdate) {
-      onMetricsUpdate({ trades: trades.length, pnl, winRate });
-    }
-  }
+//     // Notify parent component about metrics update
+//     if (onMetricsUpdate) {
+//       onMetricsUpdate({ trades: trades.length, pnl, winRate });
+//     }
+//   }
 
   // Expose runBacktest function to parent
   useEffect(() => {
@@ -247,22 +347,35 @@ export default function TradingChart({ symbol, interval, fast, slow, onMetricsUp
   }, [symbol, interval, fast, slow, candles]);
 
   return (
-    <div>
-      <div ref={containerRef} style={{ width: '100%', border: '1px solid #eee'}} />
-      {/* <button 
-        onClick={runBacktest}
-        style={{ 
-          marginTop: 16, 
-          padding: '8px 16px', 
-          backgroundColor: '#007bff', 
-          color: 'white', 
-          border: 'none', 
-          borderRadius: 4,
-          cursor: 'pointer'
-        }}
-      >
-        Run Backtest
-      </button> */}
+    <div className="relative">
+      <div 
+        ref={containerRef} 
+        className="w-full rounded-lg overflow-hidden"
+        style={{ height: '500px' }}
+      />
+      
+      {/* Trade Lines Legend */}
+      {tradeLines && (
+        <div className="absolute top-4 left-4 bg-white dark:bg-slate-800 rounded-lg shadow-lg p-3 border border-slate-200 dark:border-slate-700">
+          <div className="text-xs text-slate-500 dark:text-slate-400 mb-2">
+            Click and drag lines to adjust
+          </div>
+          <div className="flex items-center gap-4 text-sm">
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-0.5 bg-yellow-500"></div>
+              <span className="text-slate-700 dark:text-slate-300">Entry: {tradeLines.open}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-0.5 bg-red-500"></div>
+              <span className="text-slate-700 dark:text-slate-300">SL: {tradeLines.stopLoss}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-0.5 bg-green-500"></div>
+              <span className="text-slate-700 dark:text-slate-300">TP: {tradeLines.takeProfit}</span>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

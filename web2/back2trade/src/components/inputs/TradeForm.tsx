@@ -40,39 +40,71 @@ export default function TradeForm({ onSubmit }: TradeFormProps) {
     setTp("")
   }
 
+  const handleDefault = () => {
+    setOpen("116000")
+    setSl("115000")
+    setTp("117000")
+  }
+
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-4 p-4 max-w-sm">
-      <div>
-        <label className="text-sm font-medium">Open</label>
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="space-y-2">
+        <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+          Entry Price
+        </label>
         <Input
           type="number"
+          step="0.00001"
           value={open}
           onChange={(e) => setOpen(e.target.value)}
-          placeholder="Cena wejścia"
+          placeholder="Enter entry price"
+          className="w-full"
         />
       </div>
 
-      <div>
-        <label className="text-sm font-medium">Stop Loss</label>
+      <div className="space-y-2">
+        <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+          Stop Loss
+        </label>
         <Input
           type="number"
+          step="0.00001"
           value={sl}
           onChange={(e) => setSl(e.target.value)}
-          placeholder="Stop Loss"
+          placeholder="Enter stop loss"
+          className="w-full"
         />
       </div>
 
-      <div>
-        <label className="text-sm font-medium">Take Profit</label>
+      <div className="space-y-2">
+        <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+          Take Profit
+        </label>
         <Input
           type="number"
+          step="0.00001"
           value={tp}
           onChange={(e) => setTp(e.target.value)}
-          placeholder="Take Profit"
+          placeholder="Enter take profit"
+          className="w-full"
         />
       </div>
 
-      <Button type="submit">Dodaj trade</Button>
+      <div className="flex gap-2">
+        <Button 
+          type="button"
+          onClick={handleDefault}
+          className="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+        >
+          Default
+        </Button>
+        <Button 
+          type="submit" 
+          className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+        >
+          Add Trade Lines
+        </Button>
+      </div>
     </form>
   )
 }
