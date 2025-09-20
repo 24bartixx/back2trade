@@ -149,7 +149,7 @@ export default function Home() {
                 </h2>
               </div>
               <TradingChart
-                symbol="BTCUSDT"
+                symbol={cryptoSymbol}
                 startDate={startDate}
                 endDate={endDate}
                 interval={interval}

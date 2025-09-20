@@ -79,12 +79,13 @@ type HeroGeometricProps = {
   title2?: string;
   description?: string;
   className?: string;
+  symbolsList: string[];
 };
 
 export function HeroGeometric({
   title1 = "Elevate Your Digital Vision",
   title2 = "Crafting Exceptional Websites",
-  description = "Crafting exceptional digital experiences through innovative design and cutting-edge technology.",
+  symbolsList,
   className,
 }: HeroGeometricProps) {
   const fadeUpVariants = {
@@ -185,7 +186,7 @@ export function HeroGeometric({
             animate="visible"
             className="mt-12 mb-32"
           >
-            <GameOptionsDialog />
+            <GameOptionsDialog symbolsList={symbolsList} />
           </motion.div>
         </div>
       </div>

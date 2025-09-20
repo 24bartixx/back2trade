@@ -1,6 +1,8 @@
 import Logo from "@/components/components/logo";
-import GameOptionsDialog from "@/components/game-options/game-options-dialog";
+import { getAllCryptoSymbols } from "@/lib/cryptos";
 
-export default function Home() {
-  return <Logo />;
+export default async function Home() {
+  const symbols = await getAllCryptoSymbols();
+
+  return <Logo symbolsList={symbols} />;
 }
