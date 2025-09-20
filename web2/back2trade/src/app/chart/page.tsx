@@ -46,15 +46,7 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
       <div className="container mx-auto px-4 py-8 max-w-7xl">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-slate-900 dark:text-slate-100 mb-2">
-            Back2Trade
-          </h1>
-          <p className="text-slate-600 dark:text-slate-400">
-            Trading Analysis & Backtesting Platform
-          </p>
-        </div>
+        
 
         {/* Controls Panel */}
         <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-6 mb-6 border border-slate-200 dark:border-slate-700">
@@ -62,17 +54,7 @@ export default function Home() {
             Chart Settings
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                Symbol
-              </label>
-              <Input
-                value={symbol}
-                onChange={(e) => setSymbol(e.target.value)}
-                placeholder="BTCUSDT"
-                className="w-full"
-              />
-            </div>
+            
             <div>
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                 Timeframe
@@ -90,28 +72,7 @@ export default function Home() {
                 <option value="1d">1 Day</option>
               </select>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                Fast SMA
-              </label>
-              <Input
-                type="number"
-                value={fast}
-                onChange={(e) => setFast(Number(e.target.value))}
-                className="w-full"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                Slow SMA
-              </label>
-              <Input
-                type="number"
-                value={slow}
-                onChange={(e) => setSlow(Number(e.target.value))}
-                className="w-full"
-              />
-            </div>
+            
           </div>
         </div>
 
