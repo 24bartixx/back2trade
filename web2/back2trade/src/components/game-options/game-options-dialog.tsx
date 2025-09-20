@@ -21,13 +21,30 @@ import {
   PopoverContent,
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { Calendar as CalendarIcon } from "lucide-react";
+import {
+  Calendar as CalendarIcon,
+  CheckIcon,
+  ChevronsUpDownIcon,
+} from "lucide-react";
 import { format } from "date-fns";
 
 import { useGameOptions } from "@/providers/game-options-provider";
 import { cn } from "@/lib/utils";
+import { getAllCryptoSymbols } from "@/lib/cryptos";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 
-export default function GameOptionsDialog() {
+export default function GameOptionsDialog({
+  symbolsList,
+}: {
+  symbolsList: string[];
+}) {
   const { state, dispatch } = useGameOptions();
   const { startDate, finishDate, startingAccountBalance, cryptoSymbol } = state;
 
@@ -55,18 +72,52 @@ export default function GameOptionsDialog() {
           <Label htmlFor="crypto-symbol" className="mb-2 block">
             Symbol of a cryptocurrency
           </Label>
-          <Input
-            id="crypto-symbol"
-            className="w-full"
-            placeholder="BTC"
-            value={cryptoSymbol}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-              dispatch({
-                type: "SetCryptoSymbol",
-                cryptoSymbol: e.target.value,
-              })
-            }
-          />
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                role="combobox"
+                className="w-[200px] justify-between"
+              >
+                {cryptoSymbol
+                  ? symbolsList.find((symbol) => symbol === cryptoSymbol)
+                  : "Select crypto symbol..."}
+                <ChevronsUpDownIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent id="crypto-symbol" className="w-[200px] p-0">
+              <Command>
+                <CommandInput placeholder="Search framework..." />
+                <CommandList>
+                  <CommandEmpty>No framework found.</CommandEmpty>
+                  <CommandGroup>
+                    {symbolsList.slice(0, 100).map((symbol) => (
+                      <CommandItem
+                        key={symbol}
+                        value={symbol}
+                        onSelect={(currentValue) => {
+                          dispatch({
+                            type: "SetCryptoSymbol",
+                            cryptoSymbol: currentValue,
+                          });
+                        }}
+                      >
+                        {/* <CheckIcon
+                              className={cn(
+                                "mr-2 h-4 w-4",
+                                value === symbol
+                                  ? "opacity-100"
+                                  : "opacity-0"
+                              )}
+                            /> */}
+                        {symbol}
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                </CommandList>
+              </Command>
+            </PopoverContent>
+          </Popover>
         </div>
 
         <div className="space-y-6 mt-2">

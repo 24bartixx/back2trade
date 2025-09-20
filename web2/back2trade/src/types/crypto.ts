@@ -3,3 +3,7 @@ export type Crypto = {
   pair: string;
   price: number;
 };
+
+export type CryptoSymbol = {
+  symbol: string;
+};
