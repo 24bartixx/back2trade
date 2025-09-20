@@ -30,18 +30,19 @@ interface TradingChartProps {
   symbol: string;
   startDate: Date;
   endDate: Date;
+  interval: string; 
   positions?: TradePosition[];
   onPositionUpdate?: (position: TradePosition) => void;
   onPositionRemove?: (positionId: string) => void;
   onCurrentPriceChange?: (price: number) => void;
+  onNextReady?: (cb: () => void, isDisabled: boolean) => void; 
 }
 
-export default function TradingChart({ symbol, startDate, endDate, positions = [], onPositionUpdate, onPositionRemove, onCurrentPriceChange }: TradingChartProps) {
+export default function TradingChart({ symbol, startDate, endDate, positions = [], onPositionUpdate, onPositionRemove, onCurrentPriceChange,  interval, onNextReady }: TradingChartProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const seriesRef = useRef<ISeriesApi<'Candlestick'> | null>(null);
   const chartRef = useRef<IChartApi | null>(null);
 
-  const [intervalValue, setIntervalValue] = useState('1h');
   const [candles, setCandles] = useState<Candle[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
 
@@ -68,6 +69,29 @@ export default function TradingChart({ symbol, startDate, endDate, positions = [
       volume: parseFloat(d[5]),
     })) as Candle[];
   }
+  const prevDisabledRef = useRef<boolean | null>(null);
+  const handleNext = async () => {
+    if (currentIndex >= candles.length - 1) {
+      if (noMoreFutureRef.current) return;
+      await loadMoreFuture();
+    }
+    if (candles[currentIndex + 1]?.time * 1000 > endDate.getTime()) return;
+    setCurrentIndex((prev) => prev + 1);
+  };
+  
+  // informujemy rodzica, że jest gotowy przycisk Next
+  useEffect(() => {
+    if (!onNextReady) return;
+    const disabled =
+      candles.length === 0 ||
+      candles[currentIndex]?.time * 1000 >= endDate.getTime();
+  
+    // zapamiętujemy poprzedni stan, żeby nie wołać w kółko
+    if (prevDisabledRef.current !== disabled) {
+      onNextReady(handleNext, disabled);
+      prevDisabledRef.current = disabled;
+    }
+  }, [candles, currentIndex, endDate, onNextReady]);
 
   function intervalToMs(i: string) {
     const m = 60_000;
@@ -83,14 +107,14 @@ export default function TradingChart({ symbol, startDate, endDate, positions = [
   }
 
   // NEXT → pokaż kolejną świecę
-  const handleNext = async () => {
-    if (currentIndex >= candles.length - 1) {
-      if (noMoreFutureRef.current) return;
-      await loadMoreFuture();
-    }
-    if (candles[currentIndex + 1]?.time * 1000 > endDate.getTime()) return; // blokada przy końcu
-    setCurrentIndex((prev) => prev + 1);
-  };
+  // const handleNext = async () => {
+  //   if (currentIndex >= candles.length - 1) {
+  //     if (noMoreFutureRef.current) return;
+  //     await loadMoreFuture();
+  //   }
+  //   if (candles[currentIndex + 1]?.time * 1000 > endDate.getTime()) return; // blokada przy końcu
+  //   setCurrentIndex((prev) => prev + 1);
+  // };
 
   // DOGRYWANIE w lewo
   async function loadMoreHistory() {
@@ -101,9 +125,9 @@ export default function TradingChart({ symbol, startDate, endDate, positions = [
     try {
       const first = candles[0];
       const endMs = (first.time as number) * 1000;
-      const startMs = endMs - 500 * intervalToMs(intervalValue);
+      const startMs = endMs - 500 * intervalToMs(interval);
 
-      const older = await fetchCandles(symbol, intervalValue, new Date(startMs), new Date(endMs));
+      const older = await fetchCandles(symbol, interval, new Date(startMs), new Date(endMs));
       if (!older.length) {
         noMoreHistoryRef.current = true;
         return;
@@ -134,9 +158,9 @@ export default function TradingChart({ symbol, startDate, endDate, positions = [
     try {
       const last = candles[candles.length - 1];
       const startMs = (last.time as number) * 1000;
-      const endMs = startMs + 500 * intervalToMs(intervalValue);
+      const endMs = startMs + 500 * intervalToMs(interval);
 
-      const newer = await fetchCandles(symbol, intervalValue, new Date(startMs), new Date(endMs));
+      const newer = await fetchCandles(symbol, interval, new Date(startMs), new Date(endMs));
       if (!newer.length) {
         noMoreFutureRef.current = true;
         return;
@@ -196,10 +220,10 @@ export default function TradingChart({ symbol, startDate, endDate, positions = [
   // Pierwsze ładowanie (środek = startDate)
   useEffect(() => {
     async function load() {
-      const half = 250 * intervalToMs(intervalValue);
+      const half = 250 * intervalToMs(interval);
       const rows = await fetchCandles(
         symbol,
-        intervalValue,
+        interval,
         new Date(startDate.getTime() - half),
         new Date(startDate.getTime() + half)
       );
@@ -211,7 +235,7 @@ export default function TradingChart({ symbol, startDate, endDate, positions = [
 
     }
     load();
-  }, [symbol, intervalValue, startDate]);
+  }, [symbol, interval, startDate]);
 
   // Aktualizuj wykres przy zmianie currentIndex - tylko nowe świece
   useEffect(() => {
@@ -234,29 +258,7 @@ export default function TradingChart({ symbol, startDate, endDate, positions = [
 
   return (
     <div className="relative">
-      <div className="flex items-center gap-2 p-2">
-        <button
-          onClick={handleNext}
-          disabled={candles.length === 0 || candles[currentIndex]?.time * 1000 >= endDate.getTime()}
-          className="px-4 py-[5.5px] bg-blue-600 text-white rounded disabled:opacity-50"
-        >
-          Next
-        </button>
-
-        <Select value={intervalValue} onValueChange={setIntervalValue}>
-          <SelectTrigger className="w-[120px]">
-            <SelectValue placeholder="Interval" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="1m">1m</SelectItem>
-            <SelectItem value="5m">5m</SelectItem>
-            <SelectItem value="15m">15m</SelectItem>
-            <SelectItem value="1h">1h</SelectItem>
-            <SelectItem value="4h">4h</SelectItem>
-            <SelectItem value="1d">1d</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
+    
 
       <div
         ref={containerRef}

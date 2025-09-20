@@ -7,6 +7,7 @@ import TradingChart from "@/components/chart/TradingChart";
 import TradeForm, { TradePosition } from "@/components/inputs/TradeForm";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 export default function Home() {
   const [interval, setInterval_] = useState("1h");
@@ -14,7 +15,9 @@ export default function Home() {
   const [slow, setSlow] = useState(50);
   const [metrics, setMetrics] = useState<any>(null);
   const [positions, setPositions] = useState<TradePosition[]>([]);
-
+  const [nextHandler, setNextHandler] = useState<() => void>(() => () => {});
+  const [nextDisabled, setNextDisabled] = useState(true);
+  
   // Current price tracking
   const [currentPrice, setCurrentPrice] = useState<number | null>(null);
 
@@ -45,6 +48,11 @@ export default function Home() {
     );
   };
 
+  const handleNextReady = useCallback((cb: () => void, disabled: boolean) => {
+    setNextHandler(() => cb);
+    setNextDisabled(disabled);
+  }, []);
+
   const handlePositionRemove = (positionId: string) => {
     setPositions((prev) => prev.filter((pos) => pos.id !== positionId));
   };
@@ -69,6 +77,7 @@ export default function Home() {
                 </h2>
               </div>
               <TradingChart
+<<<<<<< HEAD
                 symbol={`${cryptoSymbol}USDT`}
                 startDate={startDate}
                 endDate={endDate}
@@ -77,28 +86,53 @@ export default function Home() {
                 onPositionRemove={handlePositionRemove}
                 onCurrentPriceChange={handleCurrentPriceChange}
               />
+=======
+  symbol="BTCUSDT"
+  startDate={startDate}
+  endDate={endDate}
+  interval={interval}
+  positions={positions}
+  onPositionUpdate={handlePositionUpdate}
+  onPositionRemove={handlePositionRemove}
+  onCurrentPriceChange={handleCurrentPriceChange}
+    onNextReady={handleNextReady}
+/>
+
+>>>>>>> 7f1657517438ffc302f5b9278a94e97508f7513b
             </div>
           </div>
           {/* Sidebar */}
 
           <div>
-            <div className="grid bg-white dark:bg-slate-800 rounded-xl shadow-lg p-6 mb-6 border border-slate-200 dark:border-slate-700">
-              <label className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-1">
-                Timeframe
-              </label>
-              <select
-                value={interval}
-                onChange={(e) => setInterval_(e.target.value)}
-                className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="1m">1 Minute</option>
-                <option value="5m">5 Minutes</option>
-                <option value="15m">15 Minutes</option>
-                <option value="1h">1 Hour</option>
-                <option value="4h">4 Hours</option>
-                <option value="1d">1 Day</option>
-              </select>
-            </div>
+          <div className=" relative grid bg-white dark:bg-slate-800 rounded-xl shadow-lg p-6 mb-6 border border-slate-200 dark:border-slate-700 space-y-4">
+  <label className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-1">
+    Timeframe
+  </label>
+  <div className="flex gap-2">
+  <Select value={interval} onValueChange={setInterval_}>
+    <SelectTrigger className="w-40">
+      <SelectValue placeholder="Interval" />
+    </SelectTrigger>
+    <SelectContent>
+      <SelectItem value="1m">1 Minute</SelectItem>
+      <SelectItem value="5m">5 Minutes</SelectItem>
+      <SelectItem value="15m">15 Minutes</SelectItem>
+      <SelectItem value="1h">1 Hour</SelectItem>
+      <SelectItem value="4h">4 Hours</SelectItem>
+      <SelectItem value="1d">1 Day</SelectItem>
+    </SelectContent>
+  </Select>
+
+  <button
+    onClick={nextHandler}
+    disabled={nextDisabled}
+    className="w-20 px-2 py-1 bg-blue-600 text-white rounded disabled:opacity-50"
+  >
+    Next
+  </button>
+  </div>
+</div>
+
             <div className="space-y-6">
               {/* Trade Form */}
               <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-6 border border-slate-200 dark:border-slate-700">
