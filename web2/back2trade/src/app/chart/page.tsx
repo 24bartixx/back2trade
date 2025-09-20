@@ -28,6 +28,7 @@ export default function Home() {
   const [currentPrice, setCurrentPrice] = useState<number | null>(null);
 
   const settings = useGameOptions();
+  const [balance, setBalance] = useState<number>(settings.state.startingAccountBalance ?? 10000);
 
   // Get dates with fallbacks
   let startDate = settings.state.startDate || new Date("2023-09-11T00:00:00Z");
@@ -35,6 +36,67 @@ export default function Home() {
   const endDate = settings.state.finishDate || new Date("2023-09-14T23:59:59Z");
   const cryptoSymbol = settings.state.cryptoSymbol;
 
+  useEffect(() => {
+    if (!currentPrice) return;
+  
+    setPositions((prev) =>
+      prev.map((pos) => {
+        if (pos.status === 'closed') return pos;
+  
+        // Oblicz wielkość pozycji w USD
+        const positionSize = (pos.portfolioPercentage / 100) * balance;
+  
+        // policz różnicę ceny
+        const diff =
+          pos.type === 'long'
+            ? currentPrice - pos.entry
+            : pos.entry - currentPrice;
+  
+        // procent zmiany względem entry
+        const pctChange = diff / pos.entry;
+  
+        // aktualny wynik
+        const pnl = positionSize * pctChange;
+  
+        return {
+          ...pos,
+          result: pnl, // zapisujemy "na żywo"
+        };
+      })
+    );
+  }, [currentPrice, balance]);
+
+  useEffect(() => {
+    if (!currentPrice) return;
+  
+    setPositions((prev) =>
+      prev.map((pos) => {
+        if (pos.status === 'closed') return pos;
+  
+        const hitTP =
+          (pos.type === 'long' && currentPrice >= pos.takeProfit) ||
+          (pos.type === 'short' && currentPrice <= pos.takeProfit);
+  
+        const hitSL =
+          (pos.type === 'long' && currentPrice <= pos.stopLoss) ||
+          (pos.type === 'short' && currentPrice >= pos.stopLoss);
+  
+        if (hitTP || hitSL) {
+          // balans po zamknięciu
+          setBalance((prevBalance) => prevBalance + (pos.result ?? 0));
+  
+          return {
+            ...pos,
+            status: 'closed',
+          };
+        }
+  
+        return pos;
+      })
+    );
+  }, [currentPrice]);
+
+  
   // Memoize the price change handler to avoid re-renders
   const handleCurrentPriceChange = useCallback((price: number) => {
     setCurrentPrice(price);
@@ -45,8 +107,12 @@ export default function Home() {
   };
 
   const handlePositionSubmit = (position: TradePosition) => {
-    setPositions((prev) => [...prev, position]);
+    setPositions(prev => [
+      ...prev,
+      { ...position, status: 'open', result: 0 }
+    ]);
   };
+  
 
   const handlePositionUpdate = (updatedPosition: TradePosition) => {
     setPositions((prev) =>
@@ -126,6 +192,14 @@ export default function Home() {
                 </button>
               </div>
             </div>
+            <div className=" relative grid bg-white dark:bg-slate-800 rounded-xl shadow-lg p-6 mb-6 border border-slate-200 dark:border-slate-700 space-y-4">
+  <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+    Balance: ${balance.toFixed(2)}
+  </h3>
+  </div>
+
+
+
 
             <div className="space-y-6">
               {/* Trade Form */}
@@ -222,6 +296,16 @@ export default function Home() {
                     </button>
                   </div>
                   <div className="grid grid-cols-3 gap-2 text-xs">
+                  <div>
+  <div className="text-slate-500 dark:text-slate-400">P&L</div>
+  <div
+    className={`font-medium ${
+      (position.result ?? 0) >= 0 ? "text-green-600" : "text-red-600"
+    }`}
+  >
+    {(position.result ?? 0).toFixed(2)} USD
+  </div>
+</div>
                     <div>
                       <div className="text-slate-500 dark:text-slate-400">
                         Entry

@@ -10,11 +10,15 @@ export interface TradePosition {
   takeProfit: number;
   portfolioPercentage: number;
   timestamp: number;
+
+  status?: 'open' | 'closed';
+  result?: number; 
 }
 
 export interface PriceLineManagerProps {
   series: ISeriesApi<'Candlestick'> | null;
   positions: TradePosition[];
+  currentPrice?: number; 
   onPositionUpdate?: (position: TradePosition) => void;
   onPositionRemove?: (positionId: string) => void;
 }
@@ -22,6 +26,7 @@ export interface PriceLineManagerProps {
 export default function PriceLineManager({ 
   series, 
   positions, 
+  currentPrice, 
   onPositionUpdate, 
   onPositionRemove 
 }: PriceLineManagerProps) {
@@ -213,11 +218,45 @@ export default function PriceLineManager({
     });
 
     // Create lines for all positions
-    positions.forEach(position => {
-      console.log('Creating price lines for position:', position);
+    positions
+    .filter((pos) => pos.status !== "closed")
+    .forEach((position) => {
       createPriceLines(position);
     });
   }, [positions, createPriceLines, removePriceLines]); // Removed series from deps to avoid recreating on every series change
+
+  useEffect(() => {
+    if (!series || currentPrice === undefined) return;
+  
+    positions.forEach((position) => {
+      const lines = priceLinesRef.current.get(position.id);
+      if (!lines) return;
+  
+      const passed =
+        (position.type === 'long' && currentPrice >= position.entry) ||
+        (position.type === 'short' && currentPrice <= position.entry);
+  
+      const newColor = passed ? 'green' : '#ffd700'; // zielony albo żółty
+  
+      series.removePriceLine(lines.entry);
+      const newEntryLine = series.createPriceLine({
+        price: position.entry,
+        color: newColor,
+        lineWidth: 2,
+        lineStyle: 1,
+        axisLabelVisible: true,
+        title: `${position.type.toUpperCase()} Entry`,
+        axisLabelColor: newColor,
+      });
+  
+      // zaktualizuj referencję w mapie
+      priceLinesRef.current.set(position.id, {
+        ...lines,
+        entry: newEntryLine,
+      });
+    });
+  }, [currentPrice, positions, series]);
+  
 
   // Add event listeners
   useEffect(() => {

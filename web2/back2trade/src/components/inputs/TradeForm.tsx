@@ -11,6 +11,9 @@ export interface TradePosition {
   takeProfit: number;
   portfolioPercentage: number;
   timestamp: number;
+
+  status?: 'open' | 'closed';
+  result?: number; // zysk/strata po zamknięciu
 }
 
 interface TradeFormProps {

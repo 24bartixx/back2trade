@@ -45,6 +45,7 @@ export default function TradingChart({ symbol, startDate, endDate, positions = [
   const prevIndexRef = useRef(0);
   const [candles, setCandles] = useState<Candle[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [currentPrice, setCurrentPrice] = useState<number | null>(null);
 
   // PriceLineManager will be initialized when series is ready
 
@@ -165,7 +166,7 @@ export default function TradingChart({ symbol, startDate, endDate, positions = [
     if (!containerRef.current) return;
     const chart = createChart(containerRef.current, {
       width: containerRef.current.clientWidth,
-      height: 550,
+      height: 650,
       rightPriceScale: { borderVisible: true },
       timeScale: { borderVisible: true },
     });
@@ -228,7 +229,7 @@ export default function TradingChart({ symbol, startDate, endDate, positions = [
     if (lastCandle) {
       // Update only the last candle instead of resetting all data
       seriesRef.current.update(lastCandle);
-      
+      setCurrentPrice(lastCandle.close);
       // Notify parent component about current price change
       if (onCurrentPriceChange) {
         onCurrentPriceChange(lastCandle.close);
@@ -244,7 +245,7 @@ export default function TradingChart({ symbol, startDate, endDate, positions = [
         ref={containerRef}
         data-chart-container
         className="w-full overflow-hidden border border-slate-300 dark:border-slate-700"
-        style={{ height: '550px' }}
+        style={{ height: '650px' }}
       />
       
       {/* PriceLineManager - only render when series is ready */}
@@ -252,6 +253,7 @@ export default function TradingChart({ symbol, startDate, endDate, positions = [
         <PriceLineManager
           series={seriesRef.current}
           positions={positions}
+          currentPrice={currentPrice ?? undefined} 
           onPositionUpdate={onPositionUpdate}
           onPositionRemove={onPositionRemove}
         />
