@@ -3,15 +3,15 @@
 import React from "react";
 
 type Props = {
-  params: Promise<{ ticker: string }>;
+  params: Promise<{ symbol: string }>;
 };
 
 export default function StockDetailsPage({ params }: Props) {
-  const { ticker } = React.use(params);
+  const { symbol } = React.use(params);
 
   React.useEffect(() => {
-    console.log(ticker);
-  }, [ticker]);
+    console.log(symbol);
+  }, [symbol]);
 
-  return <>{ticker}</>;
+  return <>{symbol}</>;
 }
